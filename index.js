@@ -47,7 +47,7 @@ export default class JSPass {
 
 	/**
 	 * Insert password in the password store. If path doesn't exist, it is created.
-	 * @method JSpass#insertPassword
+	 * @method JSPass#insertPassword
 	 * @throws {NoInitException} If store wasn't previously initialized.
 	 * @param {String} path - Path of insertion.
 	 * @param {String} name - Name of the password.
@@ -70,7 +70,7 @@ export default class JSPass {
 	/**
 	 * Decrypt private keys for given user id with password.
 	 * By default, key will stay decrypted for 10 minutes. Every time the key is used, timer is reset.
-	 * @method JSpass#decryptKey
+	 * @method JSPass#decryptKey
 	 * @throws {InvalidIdException} If user id isn't in keyring.
 	 * @param {String} userid - User id of the key to be decrypted in the form "User name <email>" or full email address.
 	 * @param {String} password - Password for the private key to be decrypted.
