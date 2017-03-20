@@ -64,7 +64,7 @@ export default class JSPass {
 	 * @method JSPass#getPassword
 	 * @throws {InvalidEntryException} If password doesn't exist.
 	 * @param {String} path - Path of the password.
-	 * @returns {module:password~Password} Password if it exists.
+	 * @returns {Password} Password if it exists.
 	 */
 	getPassword(path) {}
 
