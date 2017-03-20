@@ -11,12 +11,11 @@ import Password from "password";
  * Password store inspired by standard UNIX password manager pass.
  * Generated git repositories and archives can be reused with bash utitlity pass.
  * Generated password files extensions are automatically set to .gpg when store is saved.
- * @constructs JSPass
  */
 export default class JSPass {
 	/**
-	 * @class
 	 * Creates new password store.
+	 * @constructs JSPass
 	 * @param {String} [prefix=jspass-] - Prefix for saving in the LocalStore.
 	 */
 	constructor(prefix = "jspass-") {}
