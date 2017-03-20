@@ -15,7 +15,6 @@ import Password from "password";
 export default class JSPass {
 	/**
 	 * Creates new password store.
-	 * @constructs JSPass
 	 * @param {String} [prefix=jspass-] - Prefix for saving in the LocalStore.
 	 */
 	constructor(prefix = "jspass-") {}
