@@ -1,8 +1,6 @@
 /**
  * JSPass root module.
  * @requires password
- * @module index
- * @see module:password~Password
  */
 
 "use strict";

@@ -2,11 +2,9 @@
 
 /**
  * Password module.
- * @module password
  */
 
 /**
- * @class
  * Class representing password. Password content is encrypted using OpenPGP.js library.
  * Password is automatically encrypted for user ids of containing directory.
  * @constructs Password
