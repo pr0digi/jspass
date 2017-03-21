@@ -25,7 +25,7 @@ export default class Password {
 	 * @param  {Boolean} [force=false] - Overwrite password in destination if it already exists.
 	 * @param  {Boolean} [createDestination=false] - If destination directory doesn't exist, create it.
 	 * @return {Boolean} True if password has been copied.
-	 * @exception {EntryExistException} If password with same name in destination directory already exists, unless force is set to true.
+	 * @throws {EntryExistException} If password with same name in destination directory already exists, unless force is set to true.
 	 * @throws {InvalidEntryException} If destination directory doesn't exist, unless createDestination is set to true.
 	 */
 	copy(destination, force = false, createDestination = false) {}
