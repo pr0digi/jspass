@@ -1,3 +1,4 @@
 files:
  	- src/index.js
   - src/password.js
+  - src/directory.js
