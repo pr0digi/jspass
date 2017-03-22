@@ -11,11 +11,12 @@
  */
 export default class Password {
 	/**
-	 * Create new password.
-	 * @param {Directory} parent - Reference to containing directory.
-	 * @param {String} content - Content of the password.
+	 * @param  {Directory} parent Reference to containing directory.
+	 * @param  {String} name      Name of the password.
+	 * @param  {String} content   Content of the password.
+	 * @return {Password}         New password.
 	 */
-	constructor(parent, content) {}
+	constructor(parent, name, content) {}
 
 
 	/**
@@ -25,7 +26,7 @@ export default class Password {
 	 * @param  {Boolean} [force=false] - Overwrite password in destination if it already exists.
 	 * @param  {Boolean} [createDestination=false] - If destination directory doesn't exist, create it.
 	 * @return {Boolean} True if password has been copied.
-	 * @throws {EntryExistException} If password with same name in destination directory already exists, unless force is set to true.
+	 * @throws {EntryExistsException} If password with same name in destination directory already exists, unless force is set to true.
 	 * @throws {InvalidEntryException} If destination directory doesn't exist, unless createDestination is set to true.
 	 */
 	copy(destination, force = false, createDestination = false) {}
@@ -38,7 +39,7 @@ export default class Password {
 	 * @param  {Boolean} [force=false] - Overwrite password in destination if it already exists.
 	 * @param  {Boolean} [createDestination=false] - If destination directory doesn't exist, create it.
 	 * @return {Boolean} True if password has been moved.
-	 * @throws {EntryExistException} If password with same name in destination directory already exists, unless force is set to true.
+	 * @throws {EntryExistsException} If password with same name in destination directory already exists, unless force is set to true.
 	 * @throws {InvalidEntryException} If destination directory doesn't exist, unless createDestination is set to true.
 	 */
 	move(destination, force = false, createDestination = false) {}
@@ -49,7 +50,7 @@ export default class Password {
 	 * @method Password#rename
 	 * @param  {String} name - New name of the password.
 	 * @return {Boolean} True if password has been renamed.
-	 * @throws {EntryExistException} If password with same name already exist in directory.
+	 * @throws {EntryExistsException} If password with same name already exist in directory.
 	 */
 	rename(name) {}
 
