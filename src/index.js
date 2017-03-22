@@ -15,7 +15,6 @@ import Password from "password";
  */
 export default class JSPass {
 	/**
-	 * Creates new password store.
 	 * @param {String} [prefix=jspass-] - Prefix for saving in the LocalStore.
 	 */
 	constructor(prefix = "jspass-") {}
@@ -37,6 +36,8 @@ export default class JSPass {
 	 * Private keys for existing files in path needs to be imported and decrypted before initialization.
 	 * @method JSPass#init
 	 * @throws {InvalidIdException} If user id isn't in keyring.
+	 * @throws {NoPrivateKeyException} If no private key for this password exists in keyring.
+	 * @throws {PrivateKeyEncryptedException} If no private key for this password is decrypted in cache.
 	 * @param {String|Array<String>} userids - User id/s of imported keys in the form "User name <email>" or full email address.
 	 * @param {String} [path=/] - Path in the password store to be initialized.
 	 * @returns {Boolean} True if the store was succesfully initialized.
@@ -104,7 +105,7 @@ export default class JSPass {
 	/**
 	 * Move/rename file or directory. Paths are treated similarly to core-utils mv.
 	 * @method JSPass#mv
-	 * @throws {EntryExistException} If destination already exists, unless force is set to true.
+	 * @throws {EntryExistsException} If destination already exists, unless force is set to true.
 	 * @throws {InvalidEntryException} If source doesn't exist or destination directory doesn't exist, unless createParent is set to true.
 	 * @param {String} source - Source directory or file.
 	 * If source ends with /, it is treated as directory.
@@ -120,7 +121,7 @@ export default class JSPass {
 	/**
 	 * Copy file or directory. Paths are treated similarly to core-utils cp.
 	 * @method JSPass#cp
-	 * @throws {EntryExistException} If destination doesn't exist, unless force is set to true.
+	 * @throws {EntryExistsException} If destination doesn't exist, unless force is set to true.
 	 * @throws {InvalidEntryException} If source doesn't exist or destination directory doesn't exist, unless createParent is set to true.
 	 * @param {String} source - Source directory or file.
 	 * If source ends with /, it is treated as directory.

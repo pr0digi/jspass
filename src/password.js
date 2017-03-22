@@ -25,7 +25,7 @@ export default class Password {
 	 * @param  {String} destination - Destination directory where password should be copied.
 	 * @param  {Boolean} [force=false] - Overwrite password in destination if it already exists.
 	 * @param  {Boolean} [createDestination=false] - If destination directory doesn't exist, create it.
-	 * @return {Boolean} True if password has been copied.
+	 * @return {Password} Reference to the password in new destination.
 	 * @throws {EntryExistsException} If password with same name in destination directory already exists, unless force is set to true.
 	 * @throws {InvalidEntryException} If destination directory doesn't exist, unless createDestination is set to true.
 	 */
@@ -38,7 +38,7 @@ export default class Password {
 	 * @param  {String} destination - Destination directory where password should be moved.
 	 * @param  {Boolean} [force=false] - Overwrite password in destination if it already exists.
 	 * @param  {Boolean} [createDestination=false] - If destination directory doesn't exist, create it.
-	 * @return {Boolean} True if password has been moved.
+	 * @return {Password} Reference to the moved password.
 	 * @throws {EntryExistsException} If password with same name in destination directory already exists, unless force is set to true.
 	 * @throws {InvalidEntryException} If destination directory doesn't exist, unless createDestination is set to true.
 	 */
@@ -49,7 +49,7 @@ export default class Password {
 	 * Rename password.
 	 * @method Password#rename
 	 * @param  {String} name - New name of the password.
-	 * @return {Boolean} True if password has been renamed.
+	 * @return {Password} Reference to the renamed password.
 	 * @throws {EntryExistsException} If password with same name already exist in directory.
 	 */
 	rename(name) {}
@@ -72,4 +72,7 @@ export default class Password {
 	 * @return {Promise<Boolean>} True if content was succesfully encrypted.
 	 */
 	setContent(content) {}
+
+
+	getKeyId() {}
 }
