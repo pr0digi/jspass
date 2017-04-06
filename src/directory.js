@@ -122,6 +122,13 @@ export default class Directory {
 
 
 	/**
+	 * Remove directory.
+	 * @method  Directory#remove
+	 */
+	remove() {}
+
+
+	/**
 	 * Search for passwords with name containing pattern.
 	 * @method Directory#search
 	 * @param  {String} pattern - Pattern to search for.

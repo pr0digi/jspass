@@ -21,50 +21,12 @@ export default class JSPass {
 
 
 	/**
-	 * Import ASCII armored or binary key to the keyring.
+	 * Import ASCII armored or binary key to the keyring. Key can be either public or private.
 	 * @method JSPass#importKey
 	 * @param {String|UInt8Array} key - Key to be imported into keyring.
 	 * @returns {null|Array<Error>} Null if key was imported, error otherwise.
 	 */
 	importKey(key) {}
-
-
-	/**
-	 * Initialize password store given path for GPG user ids.
-	 * If path doesn't exist, it is created.
-	 * Existing password passwords in the path will be reencrypted using new ids.
-	 * Private keys for existing files in path needs to be imported and decrypted before initialization.
-	 * @method JSPass#init
-	 * @throws {InvalidIdException} If user id isn't in keyring.
-	 * @throws {NoPrivateKeyException} If no private key for this password exists in keyring.
-	 * @throws {PrivateKeyEncryptedException} If no private key for this password is decrypted in cache.
-	 * @param {String|Array<String>} userids - User id/s of imported keys in the form "User name <email>" or full email address.
-	 * @param {String} [path=/] - Path in the password store to be initialized.
-	 * @returns {Boolean} True if the store was succesfully initialized.
-	 */
-	init(userids, path = "/") {}
-
-
-	/**
-	 * Insert password in the password store. If path doesn't exist, it is created.
-	 * @method JSPass#insertPassword
-	 * @throws {NoInitException} If store wasn't previously initialized.
-	 * @param {String} path - Path of insertion.
-	 * @param {String} name - Name of the password.
-	 * @param {String} content - Content of the password.
-	 * @returns {Password} - Password if store was previously initialized.
-	 */
-	insertPassword(path, name, content) {}
-
-
-	/**
-	 * Get password object from the store.
-	 * @method JSPass#getPassword
-	 * @throws {InvalidEntryException} If password doesn't exist.
-	 * @param {String} path - Path of the password.
-	 * @returns {Password} Password if it exists.
-	 */
-	getPassword(path) {}
 
 
 	/**
@@ -80,56 +42,94 @@ export default class JSPass {
 
 
 	/**
-	 * Creates new directory in given path. If directory already exists, no error is thrown.
-	 * @method JSPass#mkdir
-	 * @throws {InvalidEntryException} If parent directory doesn't exist, unless recursive is set to true.
-	 * @param {String} path - Path of the new folder.
-	 * @param {Boolean} [recursive=false] - If some of the parent folders doesn't exist, create them.
-	 * @returns {Boolean} True if directory was created.
+	 * Initialize password store given path for GPG user ids.
+	 * If path doesn't exist, it is created.
+	 * Existing password passwords in the path will be reencrypted using new ids.
+	 * Private keys for existing files in path needs to be imported and decrypted before initialization.
+	 * @method JSPass#init
+	 * @throws {InvalidIdException} If user id isn't in keyring.
+	 * @throws {NoPrivateKeyException} If no private key for containing password exists in keyring.
+	 * @throws {PrivateKeyEncryptedException} If no private key for containing password is decrypted in cache.
+	 * @param {String|Array<String>} userids - User id/s of imported keys in the form "User name <email>" or full email address.
+	 * @param {String} [path=/] - Path in the password store to be initialized.
+	 * @returns {Boolean} True if the store was succesfully initialized.
 	 */
-	mkdir(path, recursive = false) {}
+	init(userids, path = "/") {}
 
 
 	/**
-	 * Removes directory or file.
+	 * Insert password in the password store. If path doesn't exist, it is created.
+	 * @method JSPass#insertPassword
+	 * @throws {NoInitException} If store path wasn't previously initialized.
+	 * @throws {InvalidEntryException} If path doesn't exist.
+	 * @param {String} path - Path of insertion.
+	 * @param {String} name - Name of the password.
+	 * @param {String} content - Content of the password.
+	 * @returns {Promise<Password>} - Password if store was previously initialized.
+	 */
+	insertPassword(path, name, content) {}
+
+
+	/**
+	 * Get password object from the store.
+	 * @method JSPass#getPassword
+	 * @throws {InvalidEntryException} If password doesn't exist.
+	 * @param {String} path - Path of the password.
+	 * @returns {Password} Password if it exists.
+	 */
+	getPassword(path) {}
+
+
+	/**
+	 * Creates new folder recursively in given path. If directory already exists, no error is thrown.
+	 * @method JSPass#mkdir
+	 * @param {String} path - Path of the new folder.
+	 * @returns {Directory} Newly created directory.
+	 */
+	createFolder(path, recursive = false) {}
+
+
+	/**
+	 * Removes directory or password.
 	 * If path ends with /, path is always treated as directory.
 	 * If directory and file has same name and path doesn't end with /, remove file.
-	 * @method JSPass#rm
-	 * @throws {DirNotEmptyException} If directory isn't empty, unless recursive is set to true.
+	 * @method JSPass#remove
+	 * @throws {InvalidEntryException} If path doesn't exist.
 	 * @param {String} path - Path of the file or folder.
-	 * @param {Boolean} [recursive=false] - Remove directory, even if it isn't empty.
 	 */
-	rm(path, recursive = false) {}
+	remove(path) {}
 
 
 	/**
 	 * Move/rename file or directory. Paths are treated similarly to core-utils mv.
-	 * @method JSPass#mv
+	 * @method JSPass#move
 	 * @throws {EntryExistsException} If destination already exists, unless force is set to true.
-	 * @throws {InvalidEntryException} If source doesn't exist or destination directory doesn't exist, unless createParent is set to true.
+	 * @throws {InvalidEntryException} If source doesn't exist.
 	 * @param {String} source - Source directory or file.
 	 * If source ends with /, it is treated as directory.
 	 * If directory and file in source has same name and path doesn't end with /, move file.
 	 * @param {String} destination - Destination directory or file.
-	 * If destination exists, or ends with /, move source there. Otherwise, rename directory or file to the directory name of destination.
+	 * If destination exists, or ends with /, move source there. Otherwise, rename directory or file to the base name name of destination.
+	 * If destination directory doesn't exist, it is created.
 	 * @param {Boolean} [force=false] - Overwrite destination if it already exists.
-	 * @param {Boolean} [createParent=false] - If destination directory doesn't exist, create it.
+	 * @returns {Directory|Password} Reference to the moved directory or password.
 	 */
-	mv(source, destination, force = false, createParent = false) {}
+	move(source, destination, force = false) {}
 
 
 	/**
 	 * Copy file or directory. Paths are treated similarly to core-utils cp.
-	 * @method JSPass#cp
-	 * @throws {EntryExistsException} If destination doesn't exist, unless force is set to true.
-	 * @throws {InvalidEntryException} If source doesn't exist or destination directory doesn't exist, unless createParent is set to true.
+	 * @method JSPass#copy
+	 * @throws {EntryExistsException} If destination already exist, unless force is set to true.
+	 * @throws {InvalidEntryException} If source doesn't exist.
 	 * @param {String} source - Source directory or file.
 	 * If source ends with /, it is treated as directory.
 	 * If directory and file in source has same name and path doesn't end with /, move file.
 	 * @param {String} destination - Destination directory or file.
 	 * If destination exists, or ends with /, move source there. Otherwise, rename directory or file to the directory name of destination.
-	 * @param {Boolean} [createParent=false] - If destination directory doesn't exist, create it.
+	 * If destination directory doesn't exist, it is created.
 	 * @param {Boolean} [force=false] - Overwrite destination if it already exists.
+	 * @returns {Directory|Password} Reference to the copied firectory or password.
 	 */
-	cp(source, destination, force = false, createParent = false) {}
+	copy(source, destination, force = false, createParent = false) {}
 }

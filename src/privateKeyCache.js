@@ -6,8 +6,13 @@
 
 /**
  * Class implementing cache for private keys. Keys are automatically deleted after specified time.
+ * @constructs privateKeyCache
  */
-class privateKeyCache {
+class PrivateKeyCache {
+	/**
+	 * @param  {String|Number} cacheTime - Time in seconds for which keys should be cached.
+	 * @return {PrivateKeyCache} New PrivateKeyCache.
+	 */
 	constructor(cacheTime) {
 		this.cacheTime = cacheTime;
 		this.content = {};
@@ -30,14 +35,3 @@ class privateKeyCache {
 		});
 	}
 }
-
-let abc = new privateKeyCache(45);
-let def = new privateKeyCache(90);
-
-abc.a = 5;
-def.a = 45;
-
-console.log(abc.a)
-console.log(def.a);
-setTimeout(() => { console.log(abc.a) }, 35);
-setTimeout(() => { console.log(abc.a) }, 100);
