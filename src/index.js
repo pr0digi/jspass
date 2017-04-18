@@ -46,7 +46,7 @@ export default class JSPass {
 	/**
 	 * Get user id's for root directory. By default, id's are in the form of fingerprint.
 	 * Id's are in the form "User name <email address>".
-	 * @method JSPass#getUserIds
+	 * @method JSPass#getIds
 	 * @param {String} [form=fingerprint] Form of ids, possible values are "userids", "longids" and "fingerprint".
 	 * @return {Array<String>} Id's of directory.
 	 */
@@ -55,7 +55,7 @@ export default class JSPass {
 
 	/**
 	 * Set id's for root directory. All passwords will be reencrypted using new ids.
-	 * @method JSPass#setUserIds
+	 * @method JSPass#seIds
 	 * @param {String|Array<String>} Ids User ids in the form "User name <email address>", fingerprint or long key id.
 	 * @return {Promise<Directory>} Promise of directory with reencrypted passwords.
 	 * @throws {InvalidIdException} If user id isn't in keyring.
