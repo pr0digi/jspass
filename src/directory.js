@@ -4,19 +4,51 @@
  * Directory module
  */
 
+const Password = require("./password");
+
 /**
  * Class representing directory.
  * All password added to the directory are automatically encrypted to it's corresponding user ids.
  * @constructs Directory
  */
-export default class Directory {
+module.exports = class Directory {
 	/**
 	 * @param  {String} name - Name of the directory
 	 * @param  {String} [parent] - Reference to parent directory.
 	 * If parent isn't specified, parent directory is set to this, meaning it is root directry.
 	 * @return {Directory} New directory.
 	 */
-	constructor(name, parent) {}
+	constructor(name, parent, keyring) {
+		if (typeof name !== "string") throw new TypeError("Parameter name must be string.");
+
+		//If directory is root directory
+		if (parent === "self") {
+			this.parent = this;
+			this.ids = new Array();
+			this.keyring = keyring;
+		}
+		else if (typeof parent !== "Directory") throw new TypeError("Parameter parent must be Directory.");
+
+		this.directories = new Array();
+		this.passwords = new Array();
+	}
+
+
+	/**
+	 * Checks if directory is root directory.
+	 * @return {Boolean} True if directory is root directory.
+	 */
+	isRoot() { return this.parent == this }
+
+
+	/**
+	 * Get store keyring.
+	 * @return {Keyring} OpenPGP.js keyring.
+	 */
+	getKeyring() {
+		if (this.isRoot()) return this.keyring;
+		else return parent.getKeyring();
+	}
 
 
 	/**
@@ -25,9 +57,16 @@ export default class Directory {
 	 * @param {String} name - Name of the password.
 	 * @param {String} content - Content of the password.
 	 * @throws {EntryExistsException} If password with same name already exists in direcotry.
-	 * @return {Promise<Password>} Promise of new password.
+	 * @return {Promise<Directory>} Promise of directory with new password.
 	 */
-	addPassword(name, content) {}
+	addPassword(name, content) {
+		return new Promise( (resolve, reject) => {
+			new Password(this, name, content).then( (password) => {
+				this.passwords.push(password);
+				resolve(this);
+			});
+		});
+	}
 
 
 	/**
@@ -138,24 +177,47 @@ export default class Directory {
 
 
 	/**
+	 * Get OpenPGP.js public keys.
+	 * @return {Array<Key>} Public keys for directory.
+	 */
+	getPublicKeys() {
+		let keyring = this.getKeyring();
+		let keyIds = this.getKeyIds();
+
+		let keys = new Array();
+
+		for (let id of keyIds) {
+			let key = keyring.publicKeys.getForId(id);
+			if (key == null) throw new Error("Public key for directory not found.");
+			keys.push(key);
+		}
+		return keys;
+	}
+
+
+	/**
 	 * Get user id's for directory. By default, id's are in the form of fingerprint.
 	 * Id's are in the form "User name <email address>".
-	 * @method Directory#getIds
+	 * @method Directory#getKeyIds
 	 * @param {String} [form=fingerprint] Form of ids, possible values are "userids", "longids" and "fingerprint".
 	 * @return {Array<String>} Id's of directory.
 	 */
-	getIds(form = "fingerprint") {}
+	getKeyIds(form = "fingerprint") {
+		return this.ids ? this.ids : this.parent.getKeyIds(form);
+	}
 
 
 	/**
 	 * Set id's for directory. All passwords will be reencrypted using new ids.
-	 * @method Directory#setIds
-	 * @param {String|Array<String>} Ids User ids in the form "User name <email address>", fingerprint or long key id.
+	 * @method Directory#setKeyIds
+	 * @param {String|Array<String>} Fingerprint or long key id.
 	 * @return {Promise<Directory>} Promise of directory with reencrypted passwords.
 	 * @throws {InvalidIdException} If user id isn't in keyring.
    * @throws {NoPrivateKeyException} If no private key for containing password exists in keyring.
 	 * @throws {PrivateKeyEncryptedException} If no private key for containing password is decrypted in cache.
-	 * @return {Promise<Boolean>} True if all passwords were succesfully reencrypted.
 	 */
-	setIds(Ids) {}
+	setKeyIds(ids) {
+		if (typeof ids == "string") this.ids.push(ids);
+		else this.ids = ids;
+	}
 }

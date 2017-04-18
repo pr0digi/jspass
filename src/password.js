@@ -4,19 +4,51 @@
  * Password module.
  */
 
+
+const openpgp = require("openpgp");
+const Directory = require("./directory");
+
+
 /**
  * Class representing password. Password content is encrypted using OpenPGP.js library.
  * Password is automatically encrypted for user ids of containing directory.
  * @constructs Password
  */
-export default class Password {
+module.exports = class Password {
 	/**
 	 * @param  {Directory} parent Reference to containing directory.
 	 * @param  {String} name      Name of the password.
 	 * @param  {String} content   Content of the password.
-	 * @return {Password}         New password.
+	 * @return {Promise<Password>}         New password.
 	 */
-	constructor(parent, name, content) {}
+	constructor(parent, name, content) {
+		this.parent = parent;
+		this.name = name;
+		return this.encrypt(content);
+	}
+
+
+	/**
+	 * Encrypt content and add it to the password.
+	 * @param  {String} content Content to be encrypted.
+	 * @return {Promise<Password>} Promise of password with encrypted content.
+	 */
+	encrypt(content) {
+		let keys = this.parent.getPublicKeys();
+
+		let options = {
+			data: content,
+			publicKeys: keys,
+			armor: false
+		}
+
+		return new Promise( (resolve, reject) => {
+			openpgp.encrypt(options).then( (ciphertext) => {
+				this.content = ciphertext.message.packets.write();
+				resolve(this);
+			});
+		});
+	}
 
 
 	/**
@@ -88,11 +120,19 @@ export default class Password {
 	 */
 	isDecryptable() {}
 
-	
 
 	/**
 	 * Returns key id of the password, if it exists in the keyring.
+	 * @method  Password#getKeyIds
 	 * @return {String} - Key id for the password.
 	 */
-	getKeyId() {}
+	getKeyIds() {}
+
+
+	/**
+	 * Get directory containing password.
+	 * @method  Password#getDirectory
+	 * @return {Directory} Containing directory.
+	 */
+	getDirectory() {}
 }
