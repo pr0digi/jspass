@@ -19,7 +19,7 @@ export default class JSPass {
 	 * @param {String|Number} [privateKeyCacheTime=600] - Time for which decrypted private keys should be cahed. Defaults to 10 minutes.
 	 * @param {String} [prefix=jspass-] - Prefix for saving in the LocalStore.
 	 */
-	constructor(storeKeys = true, privateKeyCacheTime = 300, prefix = "jspass-") {}
+	constructor(storeKeys = true, privateKeyCacheTime = 600, prefix = "jspass-") {}
 
 
 	/**
@@ -44,19 +44,26 @@ export default class JSPass {
 
 
 	/**
-	 * Initialize password store given path for GPG user ids.
-	 * If path doesn't exist, it is created.
-	 * Existing password passwords in the path will be reencrypted using new ids.
-	 * Private keys for existing files in path needs to be imported and decrypted before initialization.
-	 * @method JSPass#init
-	 * @throws {InvalidIdException} If user id isn't in keyring.
-	 * @throws {NoPrivateKeyException} If no private key for containing password exists in keyring.
-	 * @throws {PrivateKeyEncryptedException} If no private key for containing password is decrypted in cache.
-	 * @param {String|Array<String>} userids - User id/s of imported keys in the form "User name <email>" or full email address.
-	 * @param {String} [path=/] - Path in the password store to be initialized.
-	 * @returns {Boolean} True if the store was succesfully initialized.
+	 * Get user id's for root directory. By default, id's are in the form of fingerprint.
+	 * Id's are in the form "User name <email address>".
+	 * @method JSPass#getUserIds
+	 * @param {String} [form=fingerprint] Form of ids, possible values are "userids", "longids" and "fingerprint".
+	 * @return {Array<String>} Id's of directory.
 	 */
-	init(userids, path = "/") {}
+	getIds(form = "fingerprint") {}
+
+
+	/**
+	 * Set id's for root directory. All passwords will be reencrypted using new ids.
+	 * @method JSPass#setUserIds
+	 * @param {String|Array<String>} Ids User ids in the form "User name <email address>", fingerprint or long key id.
+	 * @return {Promise<Directory>} Promise of directory with reencrypted passwords.
+	 * @throws {InvalidIdException} If user id isn't in keyring.
+   * @throws {NoPrivateKeyException} If no private key for containing password exists in keyring.
+	 * @throws {PrivateKeyEncryptedException} If no private key for containing password is decrypted in cache.
+	 * @return {Promise<Boolean>} True if all passwords were succesfully reencrypted.
+	 */
+	setIds(Ids) {}
 
 
 	/**
