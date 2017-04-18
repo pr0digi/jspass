@@ -1,8 +1,10 @@
 "use strict"
 
 /**
- * module cache
+ * PrivateKeyCache module.
  */
+
+const openpgp = require("openpgp");
 
 /**
  * Class implementing cache for private keys. Keys are automatically deleted after specified time.
@@ -15,7 +17,9 @@ class PrivateKeyCache {
 	 */
 	constructor(cacheTime) {
 		this.cacheTime = cacheTime;
-		this.content = {};
+		console.log(openpgp.Keyring)
+		this.keyring = new openpgp.Keyring();
+
 		return new Proxy(this, {
 			set: function(target, name, val) {
 				if (name in target.content) { clearTimeout(target.content[name].timeoutId); }
@@ -35,3 +39,5 @@ class PrivateKeyCache {
 		});
 	}
 }
+
+let cache = new PrivateKeyCache(10000);

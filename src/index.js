@@ -15,9 +15,11 @@ import Password from "password";
  */
 export default class JSPass {
 	/**
+	 * @param {Boolean} [storeKeys=true] - Store keys in the LocalStore.
+	 * @param {String|Number} [privateKeyCacheTime=600] - Time for which decrypted private keys should be cahed. Defaults to 10 minutes.
 	 * @param {String} [prefix=jspass-] - Prefix for saving in the LocalStore.
 	 */
-	constructor(prefix = "jspass-") {}
+	constructor(storeKeys = true, privateKeyCacheTime = 300, prefix = "jspass-") {}
 
 
 	/**
@@ -34,11 +36,11 @@ export default class JSPass {
 	 * By default, key will stay decrypted for 10 minutes. Every time the key is used, timer is reset.
 	 * @method JSPass#decryptKey
 	 * @throws {InvalidIdException} If user id isn't in keyring.
-	 * @param {String} userid - User id of the key to be decrypted in the form "User name <email>" or full email address.
+	 * @param {String} id - User id in the form "User name <email>" or full email address or key id of the key to be decrypted.
 	 * @param {String} password - Password for the private key to be decrypted.
 	 * @returns {Boolean} True if key was decrypted, false otherwise.
 	 */
-	decryptKey(userid, password) {}
+	decryptKey(id, password) {}
 
 
 	/**

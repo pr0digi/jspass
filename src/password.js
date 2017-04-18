@@ -56,6 +56,13 @@ export default class Password {
 
 
 	/**
+	 * Remove password.
+	 * @method  password#remove
+	 */
+	remove() {}
+
+
+	/**
 	 * Get decrypted content of the password.
 	 * @method Password#getContent
 	 * @return {Promise<String>} Promise of the decrypted content of password.
@@ -74,5 +81,18 @@ export default class Password {
 	setContent(content) {}
 
 
+	/**
+	 * Check whether private key for password is decrypted.
+	 * @method  Password#isDecryptable
+	 * @returns {Boolean} True if private key for password is decrypted in cache.
+	 */
+	isDecryptable() {}
+
+	
+
+	/**
+	 * Returns key id of the password, if it exists in the keyring.
+	 * @return {String} - Key id for the password.
+	 */
 	getKeyId() {}
 }

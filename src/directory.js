@@ -138,21 +138,24 @@ export default class Directory {
 
 
 	/**
-	 * Get user ids for directory. User ids are in the form "User name <email address>".
+	 * Get user id's for directory. By default, id's are in the form of fingerprint.
+	 * Id's are in the form "User name <email address>".
 	 * @method Directory#getUserIds
-	 * @return {Array<String>} User ids of directory.
+	 * @param {String} [form=fingerprint] Form of ids, possible values are "userids", "longids" and "fingerprint".
+	 * @return {Array<String>} Id's of directory.
 	 */
-	getUserIds() {}
+	getIds(form = "fingerprint") {}
 
 
 	/**
-	 * Set user ids for directory. All passwords in this directory and subdirectories will be reencrypted using new ids.
+	 * Set id's for directory. All passwords will be reencrypted using new ids.
 	 * @method Directory#setUserIds
-	 * @param {String|Array<String>} userIds User ids in the form "User name <email address>".
+	 * @param {String|Array<String>} Ids User ids in the form "User name <email address>", fingerprint or long key id.
 	 * @return {Promise<Directory>} Promise of directory with reencrypted passwords.
 	 * @throws {InvalidIdException} If user id isn't in keyring.
    * @throws {NoPrivateKeyException} If no private key for containing password exists in keyring.
 	 * @throws {PrivateKeyEncryptedException} If no private key for containing password is decrypted in cache.
+	 * @return {Promise<Boolean>} True if all passwords were succesfully reencrypted.
 	 */
-	setUserIds(userIds) {}
+	setIds(Ids) {}
 }
