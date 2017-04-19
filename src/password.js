@@ -19,13 +19,17 @@ module.exports = class Password {
 	/**
 	 * @param  {Directory} parent Reference to containing directory.
 	 * @param  {String} name      Name of the password.
-	 * @param  {String} content   Content of the password.
+	 * @param  {String|Uint8Array} content   Content of the password, if content is string, it is automatically encrypted.
 	 * @return {Promise<Password>}         New password.
 	 */
 	constructor(parent, name, content) {
 		this.parent = parent;
 		this.name = name;
-		return this.encrypt(content);
+		if (typeof content === "string") return this.encrypt(content);
+		else {
+			this.content = Uint8Array.from(content);
+			return new Promise((resolve, reject) => { resolve(this) });
+		}
 	}
 
 
@@ -87,15 +91,36 @@ module.exports = class Password {
 	/**
 	 * Copy password to destination directory.
 	 * @method Password#copy
-	 * @param  {String} destination - Destination directory where password should be copied.
+	 * @param  {Directory} destination - Destination directory where password should be copied.
 	 * @param  {Boolean} [force=false] - Overwrite password in destination if it already exists.
 	 * @param  {Boolean} [createDestination=false] - If destination directory doesn't exist, create it.
-	 * @return {Password} Reference to the password in new destination.
+	 * @return {Promise<Password>} Reference to the password in new destination.
 	 * @throws {EntryExistsException} If password with same name in destination directory already exists, unless force is set to true.
 	 * @throws {InvalidEntryException} If destination directory doesn't exist, unless createDestination is set to true.
 	 */
-	copy(destination, force = false, createDestination = false) {
+	copy(destination, force = false) {
+		return new Promise((resolve, reject) => {
+			if (!force) destination.passwordNameCheck(this.name);
 
+			try {
+				let password = destination.getPassword(this.name);
+				password.remove();
+			}
+			catch (err) {}
+
+			let oldKeysIds = this.parent.getKeyIds();
+			let newKeysIds = destination.getKeyIds();
+
+			new Password(destination, this.name, this.content).then((passwordCopy) => {
+				destination.passwords.push(passwordCopy);
+
+				if (keysEqual(oldKeysIds, newKeysIds)) resolve(this);
+
+				let newKeys = this.parent.getKeysFor("public", newKeysIds);
+
+				passwordCopy.reencryptTo(newKeys).then( (pass) => { resolve(pass); })
+			});
+		})
 	}
 
 
