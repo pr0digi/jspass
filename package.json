@@ -22,5 +22,9 @@
   "homepage": "https://github.com/pr0digi/jspass#readme",
   "dependencies": {
     "openpgp": "^2.5.1"
+  },
+  "devDependencies": {
+    "jsdoc": "^3.4.3",
+    "worker-loader": "^0.8.0"
   }
 }

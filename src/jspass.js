@@ -88,9 +88,7 @@ module.exports = class JSPass {
 	 * @throws {PrivateKeyEncryptedException} If no private key for containing password is decrypted in cache.
 	 * @return {Promise<Directory>} Promise of directory with all passwords reencrypted to new ids.
 	 */
-	setKeyIds(keyIds) {
-		return this.root.setKeyIds(keyIds);
-	}
+	setKeyIds(keyIds) { return this.root.setKeyIds(keyIds);	}
 
 
 	/**
@@ -113,9 +111,7 @@ module.exports = class JSPass {
 	 * @throws {EntryExistsException} If password with same name already exists in direcotry.
 	 * @return {Promise<Password>} Promise of new password.
 	 */
-	addPassword(name, content) {
-		return this.root.addPassword(name, content);
-	}
+	addPassword(name, content) { return this.root.addPassword(name, content);	}
 
 
 	/**

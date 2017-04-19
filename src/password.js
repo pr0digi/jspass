@@ -7,6 +7,7 @@
 
 const openpgp = require("openpgp");
 const Directory = require("./directory");
+const keysEqual = require("./util");
 
 
 /**
@@ -74,8 +75,8 @@ module.exports = class Password {
 	 * @return {[type]} [description]
 	 */
 	reencryptTo(newKeys) {
-		this.decrypt().then( (content) => {
-			return new Promise( (resolve, reject) => {
+		return new Promise( (resolve, reject) => {
+			this.decrypt().then( (content) => {
 				this.encrypt(content, newKeys).then( () => {
 					resolve(this);
 				});
@@ -93,20 +94,43 @@ module.exports = class Password {
 	 * @throws {EntryExistsException} If password with same name in destination directory already exists, unless force is set to true.
 	 * @throws {InvalidEntryException} If destination directory doesn't exist, unless createDestination is set to true.
 	 */
-	copy(destination, force = false, createDestination = false) {}
+	copy(destination, force = false, createDestination = false) {
+
+	}
 
 
 	/**
 	 * Move password to destination directory.
 	 * @method Password#move
-	 * @param  {String} destination - Destination directory where password should be moved.
+	 * @param  {Directory} destination - Destination directory where password should be moved.
 	 * @param  {Boolean} [force=false] - Overwrite password in destination if it already exists.
-	 * @param  {Boolean} [createDestination=false] - If destination directory doesn't exist, create it.
-	 * @return {Password} Reference to the moved password.
+	 * @return {Promise<Password>} Promise of password reencrypted to the corresponding keys of new directory.
 	 * @throws {EntryExistsException} If password with same name in destination directory already exists, unless force is set to true.
-	 * @throws {InvalidEntryException} If destination directory doesn't exist, unless createDestination is set to true.
 	 */
-	move(destination, force = false, createDestination = false) {}
+	move(destination, force = false) {
+		return new Promise((resolve, reject) => {
+			if (!force) destination.passwordNameCheck(this.name);
+
+			try {
+				let password = destination.getPassword(this.name);
+				password.remove();
+			}
+			catch (err) {}
+
+			let oldKeysIds = this.parent.getKeyIds();
+			let newKeysIds = destination.getKeyIds();
+
+			this.parent.removePassword(this.name);
+			destination.passwords.push(this);
+			this.parent = destination;
+
+			if (keysEqual(oldKeysIds, newKeysIds)) resolve(this);
+
+			let newKeys = this.parent.getKeysFor("public", newKeysIds);
+
+			this.reencryptTo(newKeys).then( (pass) => { resolve(pass); })
+		});
+	}
 
 
 	/**
@@ -117,7 +141,7 @@ module.exports = class Password {
 	 * @throws {EntryExistsException} If password with same name already exist in directory.
 	 */
 	rename(name) {
-		this.parent.nameCheck(name);
+		this.parent.passwordNameCheck(name);
 		this.name = name;
 		return this;
 	}
@@ -127,7 +151,10 @@ module.exports = class Password {
 	 * Remove password.
 	 * @method  password#remove
 	 */
-	remove() {}
+	remove() {
+		this.parent.removePassword(this.name);
+		delete this;
+	}
 
 
 	/**
@@ -154,15 +181,29 @@ module.exports = class Password {
 	 * @method  Password#isDecryptable
 	 * @returns {Boolean} True if private key for password is decrypted in cache.
 	 */
-	isDecryptable() {}
+	isDecryptable() {
+		try {
+			this.parent.getUnlockedPrivateKey();
+			return true;
+		}
+		catch (err) {
+			return false;
+		}
+	}
 
 
 	/**
-	 * Returns key id of the password, if it exists in the keyring.
+	 * Returns 16-character key id's of the password.
 	 * @method  Password#getKeyIds
-	 * @return {String} - Key id for the password.
+	 * @return {String} - 16-character key id's for the password.
 	 */
-	getKeyIds() {}
+	getKeyIds() {
+		let keyIds = new Array();
+		for (let id of openpgp.message.read(this.content).getEncryptionKeyIds()) {
+			keyIds.push(id.toHex());
+		}
+		return keyIds;
+	}
 
 
 	/**

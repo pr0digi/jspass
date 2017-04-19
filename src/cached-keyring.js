@@ -13,7 +13,7 @@ const openpgp = require("openpgp");
 module.exports = class CachedKeyring extends openpgp.Keyring {
 	/**
 	 * @param  {String|Number} cacheTime - Time in seconds for which keys should be cached.
-	 * @return {PrivateKeyCache} New PrivateKeyCache.
+	 * @return {CachedKeyring} New CachedKeyring.
 	 */
 	constructor(cacheTime) {
 		super();

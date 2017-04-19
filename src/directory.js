@@ -44,7 +44,7 @@ module.exports = class Directory {
 	 */
 	getKeyring() {
 		if (this.isRoot()) return this.parent.keyring;
-		else return parent.getKeyring();
+		else return this.parent.getKeyring();
 	}
 
 
@@ -54,7 +54,7 @@ module.exports = class Directory {
 	 */
 	getCache() {
 		if (this.isRoot()) return this.parent.cache;
-		else return parent.getCache();
+		else return this.parent.getCache();
 	}
 
 
@@ -104,16 +104,6 @@ module.exports = class Directory {
 
 
 	/**
-	 * Delete password from directory.
-	 * @method Directory#deletePassword
-	 * @param  {String} name - Name of the password.
-	 * @throws {InvalidEntryException} If password with given name doesn't exist.
-	 * @return {undefined}
-	 */
-	deletePassword(name) {}
-
-
-	/**
 	 * Get password from directory.
 	 * @method Directory#getPassword
 	 * @param {String} name Name of the password.
@@ -157,7 +147,12 @@ module.exports = class Directory {
 	 * @return {Directory} Directory with specified name.
 	 * @throws {InvalidEntryException} If directory with specified name doesn't exist.
 	 */
-	getDirectory(name) {}
+	getDirectory(name) {
+		for (let directory of this.directories) {
+			if (directory.name == name) return directory;
+		}
+		throw new Error("Directory with specified name doesn't exist.");
+	}
 
 
 	/**
@@ -165,7 +160,7 @@ module.exports = class Directory {
 	 * @method Directory#getAllDirectories
 	 * @return {Array<Directory>} All directories in directory.
 	 */
-	getAllDirectories() {}
+	getAllDirectories() { return this.directories; }
 
 
 	/**
@@ -201,14 +196,45 @@ module.exports = class Directory {
 	 * @return {Password} Reference to the renamed directory.
 	 * @throws {EntryExistsException} If directory with same name already exist in parent directory.
 	 */
-	rename(name) {}
+	rename(name) {
+		this.directoryNameCheck(name);
+		this.name = name;
+	}
+
+
+	removePassword(name) {
+		for (let i=0; i<this.passwords.length; i++) {
+			if (this.passwords[i].name == name) {
+				this.passwords.splice(i, 1);
+				return;
+			}
+		}
+	}
+
+
+	/**
+	 * Remove directory from array of directories.
+	 * @param  {String} name Name of directory to remove.
+	 */
+	removeDirectory(name) {
+		for (let i=0; i<this.directories.length; i++) {
+			if (this.directories[i].name == name) {
+				this.directories.splice(i, 1);
+				return;
+			}
+		}
+	}
 
 
 	/**
 	 * Remove directory.
 	 * @method  Directory#remove
 	 */
-	remove() {}
+	remove() {
+		if (this.isRoot()) throw new Error("Cannot remove root directory.");
+		this.parent.removeDirectory(this.name);
+		delete this;
+	}
 
 
 	/**
@@ -230,6 +256,7 @@ module.exports = class Directory {
 		let keyArray;
 		if (type == "public") keyArray = this.getKeyring().publicKeys;
 		else keyArray = this.getKeyring().privateKeys;
+
 		if (!keyIds) keyIds = this.getKeyIds();
 
 		let keys = new Array();
@@ -249,7 +276,7 @@ module.exports = class Directory {
 
 		for (let id of keyIds) {
 			let key = cache.privateKeys.getForId(id);
-			return key;
+			if (key) return key;
 		}
 		throw new Error("No unlocked private key found.");
 	}
@@ -266,11 +293,16 @@ module.exports = class Directory {
 
 
 	reencryptTo(newKeys) {
-		if (this.ids) return; //return if diffrent id's are set for subdirectory
+		return new Promise((resolve, reject) => {
+			if (this.ids) resolve(); //return if diffrent id's are set for subdirectory
 
-		for (let directory of this.directories) directory.reencryptTo(newKeys);
+			let promises = new Array();
+			for (let directory of this.directories) promises.push(directory.reencryptTo(newKeys));
 
-		for (let password of this.passwords) password.reencryptTo(newKeys);
+			for (let password of this.passwords) promises.push(password.reencryptTo(newKeys));
+
+			Promise.all(promises).then( () => { resolve(); });
+		});
 	}
 
 
@@ -283,15 +315,15 @@ module.exports = class Directory {
    * @throws {NoPrivateKeyException} If no private key for containing password exists in keyring.
 	 * @throws {PrivateKeyEncryptedException} If no private key for containing password is decrypted in cache.
 	 */
-	setKeyIds(ids) {
-		let newKeys = this.getKeysFor("public", ids);
-		let promises = new Array();
-		for (let directory of this.directories) promises.push(reencryptTo(newKeys));
-		for (let password of this.passwords) promises.push(password.reencryptTo(newKeys));
-
+	setKeyIds(newIds) {
 		return new Promise( (resolve, reject) => {
+			let newKeys = this.getKeysFor("public", newIds);
+			let promises = new Array();
+			for (let directory of this.directories) promises.push(reencryptTo(newKeys));
+			for (let password of this.passwords) promises.push(password.reencryptTo(newKeys));
+
 			Promise.all(promises).then( () => {
-				this.ids = ids;
+				this.ids = newIds;
 				resolve(this);
 			});
 		});
