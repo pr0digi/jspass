@@ -18,17 +18,14 @@ module.exports = class Directory {
 	 * If parent isn't specified, parent directory is set to this, meaning it is root directry.
 	 * @return {Directory} New directory.
 	 */
-	constructor(name, parent, keyring) {
+	constructor(name, parent) {
 		if (typeof name !== "string") throw new TypeError("Parameter name must be string.");
 
 		//If directory is root directory
-		if (parent === "self") {
-			this.parent = this;
-			this.ids = new Array();
-			this.keyring = keyring;
-		}
-		else if (typeof parent !== "Directory") throw new TypeError("Parameter parent must be Directory.");
+		if (parent.constructor.name === "JSPass") this.ids = new Array();
 
+		this.name = name;
+		this.parent = parent;
 		this.directories = new Array();
 		this.passwords = new Array();
 	}
@@ -38,7 +35,7 @@ module.exports = class Directory {
 	 * Checks if directory is root directory.
 	 * @return {Boolean} True if directory is root directory.
 	 */
-	isRoot() { return this.parent == this }
+	isRoot() { return this.parent.constructor.name == "JSPass" }
 
 
 	/**
@@ -46,8 +43,44 @@ module.exports = class Directory {
 	 * @return {Keyring} OpenPGP.js keyring.
 	 */
 	getKeyring() {
-		if (this.isRoot()) return this.keyring;
+		if (this.isRoot()) return this.parent.keyring;
 		else return parent.getKeyring();
+	}
+
+
+	/**
+	 * Get private key cache.
+	 * @return {Keyring} OpenPGP.js keyring.
+	 */
+	getCache() {
+		if (this.isRoot()) return this.parent.cache;
+		else return parent.getCache();
+	}
+
+
+	/**
+	 * Check if password with name already exists in directory.
+	 * This method throws if directory exists.
+	 * @param  {String} name Name of the password.
+	 * @return {undefined}
+	 */
+	passwordNameCheck(name) {
+		for (let password of this.passwords) {
+			if (password.name == name) throw new Error("Password with this name already exist in directory.");
+		}
+	}
+
+
+	/**
+	 * Check if directory with specified name already exists in directory.
+	 * This method throws if directory exists.
+	 * @param  {String} name Name of the password.
+	 * @return {undefined}
+	 */
+	directoryNameCheck(name) {
+		for (let directory of this.directories) {
+			if (directory.name == name) throw new Error("Directory with this name already exist in directory.");
+		}
 	}
 
 
@@ -60,6 +93,7 @@ module.exports = class Directory {
 	 * @return {Promise<Directory>} Promise of directory with new password.
 	 */
 	addPassword(name, content) {
+		this.passwordNameCheck(name);
 		return new Promise( (resolve, reject) => {
 			new Password(this, name, content).then( (password) => {
 				this.passwords.push(password);
@@ -86,7 +120,12 @@ module.exports = class Directory {
 	 * @return {Password} Password with specified name.
 	 * @throws {InvalidEntryException} If password with specified name doesnt exist.
 	 */
-	getPassword(name) {}
+	getPassword(name) {
+		for (let password of this.passwords) {
+			if (password.name == name) return password;
+		}
+		throw new Error("Password with specified name not found.");
+	}
 
 
 	/**
@@ -94,16 +133,21 @@ module.exports = class Directory {
 	 * @method Directory#getAllPasswords
 	 * @return {Array<Password>} All passwords in directory.
 	 */
-	getAllPasswords() {}
+	getAllPasswords() { return this.passwords; }
 
 
 	/**
-	 * Add new directory. If directory with specified name already exists, return existing directory.
+	 * Add new directory.
 	 * @method Directory#addDirectory
 	 * @param {String} name Name of the enw directory.
-	 * @return {Directory} Newly created directory or existinf directory with specified name.
+	 * @return {Directory} Newly created directory.
 	 */
-	addDirectory(name) {}
+	addDirectory(name) {
+		this.directoryNameCheck(name);
+		let dir = new Directory(name, this);
+		this.directories.push(dir);
+		return dir;
+	}
 
 
 	/**
@@ -177,47 +221,79 @@ module.exports = class Directory {
 
 
 	/**
-	 * Get OpenPGP.js public keys.
-	 * @return {Array<Key>} Public keys for directory.
+	 * Get public or private keys for specified key id's.
+	 * @param {String} type Type of key, can be "public" or "private".
+	 * @param {Array<String>} keyIds Id's to get key for. If id's aren't specified, get current keys for directory.
+	 * @return {Array<Key>} Private or public keys for specified id's or for current directory id's.
 	 */
-	getPublicKeys() {
-		let keyring = this.getKeyring();
-		let keyIds = this.getKeyIds();
+	getKeysFor(type, keyIds) {
+		let keyArray;
+		if (type == "public") keyArray = this.getKeyring().publicKeys;
+		else keyArray = this.getKeyring().privateKeys;
+		if (!keyIds) keyIds = this.getKeyIds();
 
 		let keys = new Array();
 
 		for (let id of keyIds) {
-			let key = keyring.publicKeys.getForId(id);
-			if (key == null) throw new Error("Public key for directory not found.");
+			let key = keyArray.getForId(id);
+			if (key == null) throw new Error("Key not found.");
 			keys.push(key);
 		}
 		return keys;
 	}
 
 
+	getUnlockedPrivateKey() {
+		let keyIds = this.getKeyIds();
+		let cache = this.getCache();
+
+		for (let id of keyIds) {
+			let key = cache.privateKeys.getForId(id);
+			return key;
+		}
+		throw new Error("No unlocked private key found.");
+	}
+
+
 	/**
-	 * Get user id's for directory. By default, id's are in the form of fingerprint.
-	 * Id's are in the form "User name <email address>".
+	 * Get key id's for directory.
 	 * @method Directory#getKeyIds
-	 * @param {String} [form=fingerprint] Form of ids, possible values are "userids", "longids" and "fingerprint".
 	 * @return {Array<String>} Id's of directory.
 	 */
-	getKeyIds(form = "fingerprint") {
+	getKeyIds() {
 		return this.ids ? this.ids : this.parent.getKeyIds(form);
+	}
+
+
+	reencryptTo(newKeys) {
+		if (this.ids) return; //return if diffrent id's are set for subdirectory
+
+		for (let directory of this.directories) directory.reencryptTo(newKeys);
+
+		for (let password of this.passwords) password.reencryptTo(newKeys);
 	}
 
 
 	/**
 	 * Set id's for directory. All passwords will be reencrypted using new ids.
 	 * @method Directory#setKeyIds
-	 * @param {String|Array<String>} Fingerprint or long key id.
+	 * @param {Array<String>} Fingerprint or long key id.
 	 * @return {Promise<Directory>} Promise of directory with reencrypted passwords.
-	 * @throws {InvalidIdException} If user id isn't in keyring.
+	 * @throws {InvalidIdException} If id isn't in keyring.
    * @throws {NoPrivateKeyException} If no private key for containing password exists in keyring.
 	 * @throws {PrivateKeyEncryptedException} If no private key for containing password is decrypted in cache.
 	 */
 	setKeyIds(ids) {
-		if (typeof ids == "string") this.ids.push(ids);
-		else this.ids = ids;
+		let newKeys = this.getKeysFor("public", ids);
+		let promises = new Array();
+		for (let directory of this.directories) promises.push(reencryptTo(newKeys));
+		for (let password of this.passwords) promises.push(password.reencryptTo(newKeys));
+
+		return new Promise( (resolve, reject) => {
+			Promise.all(promises).then( () => {
+				this.ids = ids;
+				resolve(this);
+			});
+		});
 	}
 }

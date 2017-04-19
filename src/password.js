@@ -33,8 +33,8 @@ module.exports = class Password {
 	 * @param  {String} content Content to be encrypted.
 	 * @return {Promise<Password>} Promise of password with encrypted content.
 	 */
-	encrypt(content) {
-		let keys = this.parent.getPublicKeys();
+	encrypt(content, keys) {
+		if (!keys) keys = this.parent.getKeysFor("public");
 
 		let options = {
 			data: content,
@@ -50,6 +50,38 @@ module.exports = class Password {
 		});
 	}
 
+
+	/**
+	 * Decrypt content of the password.
+	 * @return {Promise<String>} Promise of password content.
+	 */
+	decrypt() {
+		return new Promise( (resolve, reject) => {
+			let options = {
+				message: openpgp.message.read(this.content),
+				privateKey: this.parent.getUnlockedPrivateKey()
+			};
+			openpgp.decrypt(options).then( (cleartext) => {
+				resolve(cleartext.data);
+			});
+		});
+	}
+
+
+	/**
+	 * Reencrypt content of the password to the current id's.
+	 * @param {Array<String>} ids Id's to reencrypt password to.
+	 * @return {[type]} [description]
+	 */
+	reencryptTo(newKeys) {
+		this.decrypt().then( (content) => {
+			return new Promise( (resolve, reject) => {
+				this.encrypt(content, newKeys).then( () => {
+					resolve(this);
+				});
+			});
+		});
+	}
 
 	/**
 	 * Copy password to destination directory.
@@ -84,7 +116,11 @@ module.exports = class Password {
 	 * @return {Password} Reference to the renamed password.
 	 * @throws {EntryExistsException} If password with same name already exist in directory.
 	 */
-	rename(name) {}
+	rename(name) {
+		this.parent.nameCheck(name);
+		this.name = name;
+		return this;
+	}
 
 
 	/**
@@ -101,16 +137,16 @@ module.exports = class Password {
 	 * @throws {NoPrivateKeyException} If no private key for this password exists in keyring.
 	 * @throws {PrivateKeyEncryptedException} If no private key for this password is decrypted in cache.
 	 */
-	getContent() {}
+	getContent() { return this.decrypt(); }
 
 
 	/**
 	 * Set content of the password. Content is automatically encrypted to the corresponding public keys of directory.
 	 * @method Password#setContent
-	 * @param {String} content - Content of the password.
-	 * @return {Promise<Boolean>} True if content was succesfully encrypted.
+	 * @param {String} content - New content of the password.
+	 * @return {Promise<Password>} Promise of password with encrypted content.
 	 */
-	setContent(content) {}
+	setContent(content) { return this.encrypt(content);	}
 
 
 	/**
@@ -134,5 +170,5 @@ module.exports = class Password {
 	 * @method  Password#getDirectory
 	 * @return {Directory} Containing directory.
 	 */
-	getDirectory() {}
+	getDirectory() { return this.parent; }
 }

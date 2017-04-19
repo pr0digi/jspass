@@ -23,7 +23,7 @@ module.exports = class JSPass {
 	 */
 	constructor(privateKeyCacheTime = 600, storeKeys = true, prefix = "jspass-") {
 		this.keyring = new openpgp.Keyring();
-		this.root = new Directory("root", "self", this.keyring);
+		this.root = new Directory("root", this);
 		this.cache = new CachedKeyring(privateKeyCacheTime);
 	}
 
@@ -71,13 +71,11 @@ module.exports = class JSPass {
 
 
 	/**
-	 * Get user id's for root directory. By default, id's are in the form of fingerprint.
-	 * Id's are in the form "User name <email address>".
+	 * Get id's for root directory.
 	 * @method JSPass#getIds
-	 * @param {String} [form=fingerprint] Form of ids, possible values are "userids", "longids" and "fingerprint".
 	 * @return {Array<String>} Id's of directory.
 	 */
-	getKeyIds(form = "fingerprint") {}
+	getKeyIds() { return this.root.getKeyIds(); }
 
 
 	/**
@@ -88,10 +86,10 @@ module.exports = class JSPass {
 	 * @throws {InvalidIdException} If some id isn't in keyring.
    * @throws {NoPrivateKeyException} If no private key for containing password exists in keyring.
 	 * @throws {PrivateKeyEncryptedException} If no private key for containing password is decrypted in cache.
-	 * @return {Promise<Boolean>} True if all passwords were succesfully reencrypted.
+	 * @return {Promise<Directory>} Promise of directory with all passwords reencrypted to new ids.
 	 */
-	setKeyIds(ids) {
-		return this.root.setKeyIds(ids);
+	setKeyIds(keyIds) {
+		return this.root.setKeyIds(keyIds);
 	}
 
 
@@ -131,12 +129,12 @@ module.exports = class JSPass {
 
 
 	/**
-	 * Creates new folder recursively in given path. If directory already exists, no error is thrown.
-	 * @method JSPass#mkdir
-	 * @param {String} path - Path of the new folder.
-	 * @returns {Directory} Newly created directory.
+	 * Add new directory to the root.
+	 * @method Directory#addDirectory
+	 * @param {String} name Name of the enw directory.
+	 * @return {Directory} Newly created directory.
 	 */
-	createFolder(path, recursive = false) {}
+	addDirectory(name) { return this.root.addDirectory(name); }
 
 
 	/**
