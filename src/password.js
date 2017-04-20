@@ -174,7 +174,7 @@ module.exports = class Password {
 
 	/**
 	 * Remove password.
-	 * @method  password#remove
+	 * @method  Password#remove
 	 */
 	remove() {
 		this.parent.removePassword(this.name);
