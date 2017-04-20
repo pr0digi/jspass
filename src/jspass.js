@@ -116,12 +116,57 @@ module.exports = class JSPass {
 
 	/**
 	 * Get password object from the store.
-	 * @method JSPass#getPassword
-	 * @throws {InvalidEntryException} If password doesn't exist.
-	 * @param {String} path - Path of the password.
+	 * @method JSPass#getPasswordByPath
+	 * @throws If password doesn't exist.
+	 * @param {String} path - Path of the password starting with "/" and ending with password name.
 	 * @returns {Password} Password if it exists.
 	 */
-	getPassword(path) {}
+	getPasswordByPath(path) {
+		path = path.split("/").slice(1);
+		let currentDir = this.root;
+
+		while (path.length > 1) currentDir = currentDir.getDirectory(path.shift());
+
+		return currentDir.getPassword(path.shift());
+	}
+
+
+	/**
+	 * Get password from root directory.
+	 * @method JSPass#getPassword
+	 * @param {String} name Name of the password.
+	 * @return {Password} Password with specified name.
+	 * @throws {InvalidEntryException} If password with specified name doesnt exist.
+	 */
+	getPassword(name) { return this.root.getPassword(name); }
+
+
+	/**
+	 * Get directory with specified name from root directory.
+	 * @method Directory#getDirectory
+	 * @param  {String} name Name of the directory to return.
+	 * @return {Directory} Directory with specified name.
+	 * @throws {InvalidEntryException} If directory with specified name doesn't exist.
+	 */
+	getDirectory(name) { return this.root.getDirectory(name); }
+
+
+	/**
+	 * Get directory object from the store.
+	 * @method  JSPass#getDirectoryByPath
+	 * @param {String} path Path of the directory starting with "/" and ending with it's name, with optional "/" on the end.
+	 * @throws If directory doesn't exist.
+	 * @return {Directory} Directory if it exists.
+	 */
+	getDirectoryByPath(path) {
+		path = path.split("/").slice(1);
+		if (path[path.length - 1] == '') path.pop();
+
+		let currentDir = this.root;
+		while (path.length) currentDir = currentDir.getDirectory(path.shift());
+
+		return currentDir;
+	}
 
 
 	/**
@@ -134,14 +179,41 @@ module.exports = class JSPass {
 
 
 	/**
+	 * Get password or directory with specified path.
+	 * @param  {String} path Path of directory or password. If path ends with "/", it's always treated as directory.
+	 * @throws If neither password nor directory with path exists.
+	 * @return {Directory|Password} Password or directory with specified path.
+	 */
+	getItemByPath(path) {
+		let item;
+		if (!path.endsWith("/")) {
+			try {	item = this.getPasswordByPath(path); }
+			catch (err) {}
+		}
+
+		if (!item) {
+			try { item = this.getDirectoryByPath(path) }
+			catch(err) {}
+		}
+
+		if (!item) throw new Error("Item with specified path doesn't exist.");
+
+		return item;
+	}
+
+
+	/**
 	 * Removes directory or password.
 	 * If path ends with /, path is always treated as directory.
 	 * If directory and file has same name and path doesn't end with /, remove file.
-	 * @method JSPass#remove
-	 * @throws {InvalidEntryException} If path doesn't exist.
+	 * @method JSPass#removeByPath
+	 * @throws If path doesn't exist.
 	 * @param {String} path - Path of the file or folder.
 	 */
-	remove(path) {}
+	removeByPath(path) {
+		let item = this.getItemByPath(path);
+		item.remove();
+	}
 
 
 	/**
