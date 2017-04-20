@@ -7,7 +7,7 @@
 
 const openpgp = require("openpgp");
 const Directory = require("./directory");
-const keysEqual = require("./util");
+const util = require("./util");
 
 
 /**
@@ -114,7 +114,7 @@ module.exports = class Password {
 			new Password(destination, this.name, this.content).then((passwordCopy) => {
 				destination.passwords.push(passwordCopy);
 
-				if (keysEqual(oldKeysIds, newKeysIds)) resolve(this);
+				if (util.keysEqual(oldKeysIds, newKeysIds)) resolve(this);
 
 				let newKeys = this.parent.getKeysFor("public", newKeysIds);
 
@@ -149,7 +149,7 @@ module.exports = class Password {
 			destination.passwords.push(this);
 			this.parent = destination;
 
-			if (keysEqual(oldKeysIds, newKeysIds)) resolve(this);
+			if (util.keysEqual(oldKeysIds, newKeysIds)) resolve(this);
 
 			let newKeys = this.parent.getKeysFor("public", newKeysIds);
 

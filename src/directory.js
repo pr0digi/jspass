@@ -5,6 +5,7 @@
  */
 
 const Password = require("./password");
+const util = require("./util")
 
 /**
  * Class representing directory.
@@ -168,25 +169,63 @@ module.exports = class Directory {
 	 * @method Directory#move
 	 * @param  {String} destination - Destination directory where directory should be moved.
 	 * @param  {Boolean} [force=false] - Overwrite directory in destination if it already exists.
-	 * @param  {Boolean} [createDestination=false] - If destination directory doesn't exist, create it.
-	 * @return {Diectory} Reference to the moved directory.
+	 * @return {Promise<Directory>} Promise of directory reencrypted to the corresponding keys of new location.
 	 * @throws {EntryExistsException} If directory with same name in destination directory already exists, unless force is set to true.
 	 * @throws {InvalidEntryException} If destination directory doesn't exist, unless createDestination is set to true.
 	 */
-	move(destination, force = false, createDestination = false) {}
+	move(destination, force = false) {
+		if (!force) destination.directoryNameCheck(this.name);
+
+		try {
+			let dir = destination.getDirectory(this.name);
+			dir.remove();
+		}
+		catch (err) {}
+
+		let oldKeysIds = this.getKeyIds();
+		let newKeysIds = destination.getKeyIds();
+
+		this.parent.removeDirectory(this.name);
+		destination.directories.push(this);
+
+		return new Promise((resolve, reject) => {
+			if (util.keysEqual(oldKeysIds, newKeysIds)) resolve(this);
+
+			this.reencryptTo(newKeysIds).then(() => { resolve(this); });
+		});
+	}
 
 
 	/**
 	 * Copy directory to destination directory.
 	 * @method Directory#copy
-	 * @param  {String} destination - Destination directory where directory should be copied.
+	 * @param  {Directory} destination - Destination directory where directory should be copied.
 	 * @param  {Boolean} [force=false] - Overwrite directory in destination if it already exists.
 	 * @param  {Boolean} [createDestination=false] - If destination directory doesn't exist, create it.
-	 * @return {Diectory} Reference to the directory in new destination.
+	 * @return {Promise<Directory>} Promise of directory copied to the new location and reencrypted to it's keys.
 	 * @throws {EntryExistsException} If directory with same name in destination directory already exists, unless force is set to true.
 	 * @throws {InvalidEntryException} If destination directory doesn't exist, unless createDestination is set to true.
 	 */
-	copy(destination, force = false, createDestination = false) {}
+	copy(destination, force = false) {
+		if (!force) destination.directoryNameCheck(this.name);
+
+		try {
+			let dir = destination.getDirectory(this.name);
+			dir.remove();
+		}
+		catch (err) {}
+
+		return new Promise((resolve, reject) => {
+			let newDir = destination.addDirectory(this.name);
+
+			let promises = new Array();
+			for (let password of this.passwords) promises.push(password.copy(newDir));
+
+			for (let directory of this.directories) promises.push(directory.copy(newDir));
+
+			Promise.all(promises).then(() => { resolve(newDir); });
+		});
+	}
 
 
 	/**
@@ -232,6 +271,8 @@ module.exports = class Directory {
 	 */
 	remove() {
 		if (this.isRoot()) throw new Error("Cannot remove root directory.");
+		for (let dir of this.directories) dir.remove();
+		for (let pass of this.passwords) pass.remove();
 		this.parent.removeDirectory(this.name);
 		delete this;
 	}
@@ -288,7 +329,7 @@ module.exports = class Directory {
 	 * @return {Array<String>} Id's of directory.
 	 */
 	getKeyIds() {
-		return this.ids ? this.ids : this.parent.getKeyIds(form);
+		return this.ids ? this.ids : this.parent.getKeyIds();
 	}
 
 
