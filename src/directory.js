@@ -142,6 +142,33 @@ module.exports = class Directory {
 
 
 	/**
+	 * Adds new directory recursively.
+	 * @param {String} path Relative path of the new directory.
+	 * @return {Directory} Newly created directory.
+	 */
+	addDirectoryRecursive(path) {
+		if (path.startsWith("./")) path = path.substring(2);
+
+		path = path.split("/");
+
+		if (path[path.length - 1] == "") path.pop();
+
+		let currentDir = this;
+
+		for (let pathPart of path) {
+			try {
+				currentDir = currentDir.getDirectory(pathPart);
+			}
+			catch (err) {
+				currentDir = currentDir.addDirectory(pathPart);
+			}
+		}
+
+		return currentDir;
+	}
+
+
+	/**
 	 * Get directory with specified name.
 	 * @method Directory#getDirectory
 	 * @param  {String} name Name of the directory to return.

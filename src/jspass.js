@@ -179,6 +179,13 @@ module.exports = class JSPass {
 
 
 	/**
+	 * Get root directory of the store.
+	 * @return {Directory} Root directory.
+	 */
+	getRoot() { return this.root; }
+
+
+	/**
 	 * Get password or directory with specified path.
 	 * @param  {String} path Path of directory or password. If path ends with "/", it's always treated as directory.
 	 * @throws If neither password nor directory with path exists.
@@ -228,9 +235,39 @@ module.exports = class JSPass {
 	 * If destination exists, or ends with /, move source there. Otherwise, rename directory or file to the base name name of destination.
 	 * If destination directory doesn't exist, it is created.
 	 * @param {Boolean} [force=false] - Overwrite destination if it already exists.
-	 * @returns {Directory|Password} Reference to the moved directory or password.
+	 * @returns {Promise<Directory|Password>} Promise of moved directory or password reencrypted to the corresponding keys of new location.
 	 */
-	move(source, destination, force = false) {}
+	move(source, destination, force = false) {
+		let sourceItem = this.getItemByPath(source);
+		let destinationItem;
+
+		try {
+			destinationItem = this.getItemByPath(destination);
+
+			if (destinationItem.constructor.name == "Password") {
+				try {
+					destinationItem = destinationItem.parent.getDirectory(destinationItem.name);
+				}
+				catch (err) {}
+			}
+		}
+		catch (err) {
+			if (!destination.endsWith("/")) {
+				destination = destination.split("/");
+				let newName = destination.pop();
+				sourceItem.rename(newName);
+				destination = destination.join("/");
+			}
+
+			destinationItem = this.root.addDirectoryRecursive(destination.substring(1));
+		}
+
+		return new Promise((resolve, reject) => {
+			sourceItem.move(destinationItem).then( (item) => {
+				resolve(item);
+			});
+		});
+	}
 
 
 	/**
