@@ -7,7 +7,9 @@
 
 const openpgp = require("openpgp");
 const Directory = require("./directory");
-const CachedKeyring = require("./cached-keyring")
+const CachedKeyring = require("./cached-keyring");
+const GithubAPI = require('./git/github-api');
+const Password = require('./password');
 
 /**
  * Password store inspired by standard UNIX password manager pass.
@@ -25,6 +27,49 @@ module.exports = class JSPass {
 		this.keyring = new openpgp.Keyring();
 		this.root = new Directory("root", this);
 		this.cache = new CachedKeyring(privateKeyCacheTime);
+	}
+
+
+	/**
+	 * Initialize git. This method must be called first before other git operations.
+	 * @param  {String} repoUrl   Repository URL.
+	 * @param  {String} userAgent User agent for calls to the github API.
+	 */
+	initGit(repoUrl, userAgent="jspass") {
+		if (repoUrl.match("github.com")) this.git = new GithubAPI(userAgent);
+		else throw new Error("Unsupported git service.");
+
+		this.git.setRepository(repoUrl);
+	}
+
+
+	pullGit() {
+		return new Promise((resolve, reject) => {
+			this.git.getAllFiles().then((files) => {
+				let passwordPromises = new Array();
+				for (let file of files) {
+					if (!file.path.endsWith(".gpg-id")) {
+						file.path = file.path.split("/");
+						let filename = file.path.pop();
+						//remove .gpgp extension
+						filename = filename.substring(0, filename.length - 4);
+						let directoryPath = file.path.join('/');
+						if (directoryPath) directoryPath += "/";
+
+						let parent;
+
+						if (directoryPath == "") parent = this.root;
+						else parent = this.root.addDirectoryRecursive(directoryPath);
+						passwordPromises.push(new Password(parent, filename, file.content));
+					}
+				}
+
+				Promise.all(passwordPromises).then((passwords) => {
+					for (let password of passwords) password.parent.passwords.push(password);
+					resolve();
+				});
+			}).catch((err) => reject(err));
+		});
 	}
 
 
@@ -101,7 +146,10 @@ module.exports = class JSPass {
 	 * @param {String} content - Content of the password.
 	 * @returns {Promise<Password>} - Password if store was previously initialized.
 	 */
-	insertPassword(path, name, content) {}
+	insertPassword(destination, name, content) {
+		let destinationDir = this.root.addDirectoryRecursive(destination.substring(1));
+		return destinationDir.addPassword(name, content);
+	}
 
 	/**
 	 * Add password to store. Password is automatically encrypted to the corresponding keys of directory.
@@ -231,39 +279,16 @@ module.exports = class JSPass {
 	 * @param {String} source - Source directory or file.
 	 * If source ends with /, it is treated as directory.
 	 * If directory and file in source has same name and path doesn't end with /, move file.
-	 * @param {String} destination - Destination directory or file.
-	 * If destination exists, or ends with /, move source there. Otherwise, rename directory or file to the base name name of destination.
-	 * If destination directory doesn't exist, it is created.
+	 * @param {String} destination - Destination directory.
 	 * @param {Boolean} [force=false] - Overwrite destination if it already exists.
 	 * @returns {Promise<Directory|Password>} Promise of moved directory or password reencrypted to the corresponding keys of new location.
 	 */
 	move(source, destination, force = false) {
 		let sourceItem = this.getItemByPath(source);
-		let destinationItem;
-
-		try {
-			destinationItem = this.getItemByPath(destination);
-
-			if (destinationItem.constructor.name == "Password") {
-				try {
-					destinationItem = destinationItem.parent.getDirectory(destinationItem.name);
-				}
-				catch (err) {}
-			}
-		}
-		catch (err) {
-			if (!destination.endsWith("/")) {
-				destination = destination.split("/");
-				let newName = destination.pop();
-				sourceItem.rename(newName);
-				destination = destination.join("/");
-			}
-
-			destinationItem = this.root.addDirectoryRecursive(destination.substring(1));
-		}
+		let destinationDir = this.root.addDirectoryRecursive(destination.substring(1));
 
 		return new Promise((resolve, reject) => {
-			sourceItem.move(destinationItem).then( (item) => {
+			sourceItem.move(destinationDir, force).then( (item) => {
 				resolve(item);
 			});
 		});
@@ -278,11 +303,18 @@ module.exports = class JSPass {
 	 * @param {String} source - Source directory or file.
 	 * If source ends with /, it is treated as directory.
 	 * If directory and file in source has same name and path doesn't end with /, move file.
-	 * @param {String} destination - Destination directory or file.
-	 * If destination exists, or ends with /, move source there. Otherwise, rename directory or file to the directory name of destination.
-	 * If destination directory doesn't exist, it is created.
+	 * @param {String} destination - Destination directory.
 	 * @param {Boolean} [force=false] - Overwrite destination if it already exists.
 	 * @returns {Directory|Password} Reference to the copied firectory or password.
 	 */
-	copy(source, destination, force = false, createParent = false) {}
+	copy(source, destination, force = false) {
+		let sourceItem = this.getItemByPath(source);
+		let destinationDir = this.root.addDirectoryRecursive(destination.substring(1));
+
+		return new Promise((resolve, reject) => {
+			sourceItem.copy(destinationDir, force).then( (item) => {
+				resolve(item);
+			});
+		});
+	}
 }

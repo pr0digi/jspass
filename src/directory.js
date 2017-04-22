@@ -91,14 +91,14 @@ module.exports = class Directory {
 	 * @param {String} name - Name of the password.
 	 * @param {String} content - Content of the password.
 	 * @throws {EntryExistsException} If password with same name already exists in direcotry.
-	 * @return {Promise<Directory>} Promise of directory with new password.
+	 * @return {Promise<Password>} Promise of new password.
 	 */
 	addPassword(name, content) {
 		this.passwordNameCheck(name);
 		return new Promise( (resolve, reject) => {
 			new Password(this, name, content).then( (password) => {
 				this.passwords.push(password);
-				resolve(this);
+				resolve(password);
 			});
 		});
 	}
