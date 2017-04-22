@@ -252,12 +252,9 @@ module.exports = class GithubAPI {
 					if (this.currentTree.tree[i].path == ".gitattributes") continue;
 					if (this.currentTree.tree[i].path.endsWith('.gpg')) {
 						if (typeof window == 'undefined') {
-							let byteCharacters = Buffer(response[i].content, 'base64').toString();
-							let byteNumbers = new Array(byteCharacters.length);
-							for (let i=0; i<byteCharacters.length; i++) {
-								byteNumbers[i] = byteCharacters.charCodeAt(i);
-							}
-							content = new Uint8Array(byteNumbers);
+							let buffer = Buffer(response[i].content, 'base64');
+
+							content = new Uint8Array(buffer);
 						}
 					}
 					else {

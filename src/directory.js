@@ -338,13 +338,18 @@ module.exports = class Directory {
 	}
 
 
-	getUnlockedPrivateKey() {
-		let keyIds = this.getKeyIds();
+	getUnlockedPrivateKey(keyIds) {
+		if (!keyIds) keyIds = this.getKeyIds();
 		let cache = this.getCache();
 
 		for (let id of keyIds) {
-			let key = cache.privateKeys.getForId(id);
+			let key = cache.privateKeys.getForId(id, true);
 			if (key) return key;
+		}
+
+		for (let id of keyIds) {
+			let key = cache.privateKeys.getForAddress(id);
+			if (key.length != 0) return key;
 		}
 		throw new Error("No unlocked private key found.");
 	}

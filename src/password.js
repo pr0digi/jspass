@@ -64,11 +64,11 @@ module.exports = class Password {
 		return new Promise( (resolve, reject) => {
 			let options = {
 				message: openpgp.message.read(this.content),
-				privateKey: this.parent.getUnlockedPrivateKey()
+				privateKey: this.parent.getUnlockedPrivateKey(this.getKeyIds())
 			};
 			openpgp.decrypt(options).then( (cleartext) => {
 				resolve(cleartext.data);
-			});
+			}).catch((err) => reject(err));
 		});
 	}
 
