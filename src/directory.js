@@ -39,6 +39,12 @@ module.exports = class Directory {
 	isRoot() { return this.parent.constructor.name == "JSPass" }
 
 
+	getPath() {
+		if (this.isRoot()) return '/';
+		else return this.parent.getPath() + this.name + '/';
+	}
+
+
 	/**
 	 * Get store keyring.
 	 * @return {Keyring} OpenPGP.js keyring.
@@ -46,6 +52,15 @@ module.exports = class Directory {
 	getKeyring() {
 		if (this.isRoot()) return this.parent.keyring;
 		else return this.parent.getKeyring();
+	}
+
+
+	getGit() {
+		if (this.isRoot()) {
+			if (typeof this.parent.git == 'undefined') throw new Error("Git wasn't initialized");
+			return this.parent.git;
+		}
+		else return this.parent.getGit();
 	}
 
 
@@ -330,7 +345,7 @@ module.exports = class Directory {
 		let keys = new Array();
 
 		for (let id of keyIds) {
-			let key = keyArray.getForId(id);
+			let key = keyArray.getForId(id, true);
 			if (key == null) throw new Error("Key not found.");
 			keys.push(key);
 		}

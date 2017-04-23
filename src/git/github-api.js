@@ -148,7 +148,12 @@ module.exports = class GithubAPI {
 		let file = this.getFileByPath(path);
 
 		if ('sha' in file) delete file.sha;
-		file.content = content;
+		if (typeof window == "undefined") {
+			if (path.endsWith(".gpg")) {
+				file.content = Buffer(content).toString("base64");
+				file.encoding = "base64";
+			}
+		}
 	}
 
 
@@ -178,23 +183,58 @@ module.exports = class GithubAPI {
 	}
 
 
-	createTree() {
+	createBlobs() {
 		return new Promise((resolve, reject) => {
-			if (!this.currentTree) reject();
+			let changedFiles = new Array();
+			let promises = new Array();
 
-			const options = {
-				path: "/repos/" + this.username + "/" + this.repoName + "/git/trees",
-				method: "POST"
-			};
+			for (let file of this.currentTree.tree) {
+				if (typeof file.encoding != "undefined" && file.encoding == 'base64') {
+					changedFiles.push(file);
+					let options = {
+						method: "POST",
+						path: "/repos/" + this.username + "/" + this.repoName + "/git/blobs"
+					};
 
-			const data = {
-				tree: this.currentTree.tree
+					let data = {
+						content: file.content,
+						encoding: "base64"
+					};
+
+					promises.push(this.makeRequest(options, data));
+				}
 			}
 
-			this.makeRequest(options, data).then((response) => {
-				this.currentTree.sha = response.sha;
+			Promise.all(promises).then((hashes) => {
+				for (let i=0; i<changedFiles.length; i++) {
+					delete changedFiles[i].content;
+					delete changedFiles[i].encoding;
+					changedFiles[i].sha = hashes[i].sha;
+				}
 				resolve();
-			});
+			}).catch((err) => reject());
+		});
+	}
+
+	createTree() {
+		return new Promise((resolve, reject) => {
+			this.createBlobs().then(() => {
+				if (!this.currentTree) reject();
+
+				const options = {
+					path: "/repos/" + this.username + "/" + this.repoName + "/git/trees",
+					method: "POST"
+				};
+
+				const data = {
+					tree: this.currentTree.tree
+				}
+
+				this.makeRequest(options, data).then((response) => {
+					this.currentTree.sha = response.sha;
+					resolve();
+				}).catch((err) => reject(err));
+			}).catch((err) => reject(err));
 		});
 	}
 

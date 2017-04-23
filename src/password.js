@@ -198,7 +198,23 @@ module.exports = class Password {
 	 * @param {String} content - New content of the password.
 	 * @return {Promise<Password>} Promise of password with encrypted content.
 	 */
-	setContent(content) { return this.encrypt(content);	}
+	setContent(content) {
+		return new Promise((resolve, reject) => {
+			let keys = this.parent.getKeysFor("public", this.getKeyIds());
+			this.encrypt(content, keys).then( (pass) => {
+				try {
+					let git = this.getGit();
+					let path = this.getPath().substring(1) + ".gpg";
+					git.changeContent(path, pass.content);
+				}
+				catch (err) { }
+				resolve(pass);
+			})
+		});
+	}
+
+
+	getPath() {	return this.parent.getPath() + this.name; }
 
 
 	/**
@@ -228,6 +244,11 @@ module.exports = class Password {
 			keyIds.push(id.toHex());
 		}
 		return keyIds;
+	}
+
+
+	getGit() {
+		return this.parent.getGit();
 	}
 
 
