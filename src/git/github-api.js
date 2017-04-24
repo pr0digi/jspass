@@ -127,10 +127,15 @@ module.exports = class GithubAPI {
 		let file = {
 			path: path,
 			mode: '100644',
-			type: 'blob',
-			content: content
+			type: 'blob'
 		}
 
+		if (path.endsWith(".gpg")) {
+			if (typeof window == "undefined") content = Buffer(content).toString("base64");
+			file.encoding = "base64";
+		}
+
+		file.content = content;
 		this.currentTree.tree.push(file);
 	}
 

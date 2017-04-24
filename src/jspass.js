@@ -27,6 +27,35 @@ module.exports = class JSPass {
 		this.keyring = new openpgp.Keyring();
 		this.root = new Directory("root", this);
 		this.cache = new CachedKeyring(privateKeyCacheTime);
+
+		//override OpenPGP.js methods for email check to also accept substring of user id
+		function getForAddress(email) {
+		  var results = [];
+		  for (var i = 0; i < this.keys.length; i++) {
+		    if (emailCheck(email, this.keys[i])) {
+		      results.push(this.keys[i]);
+		    }
+		  }
+		  return results;
+		};
+
+		function emailCheck(email, key) {
+		  email = email.toLowerCase();
+		  // escape email before using in regular expression
+		  var emailEsc = email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		  var emailRegex = new RegExp(emailEsc);
+		  var userIds = key.getUserIds();
+		  for (var i = 0; i < userIds.length; i++) {
+		    var userId = userIds[i].toLowerCase();
+		    if (email === userId || emailRegex.exec(userId)) {
+		      return true;
+		    }
+		  }
+		  return false;
+		}
+
+		this.keyring.publicKeys.getForAddress = getForAddress;
+		this.keyring.privateKeys.getForAddress = getForAddress;
 	}
 
 
@@ -48,19 +77,25 @@ module.exports = class JSPass {
 			this.git.getAllFiles().then((files) => {
 				let passwordPromises = new Array();
 				for (let file of files) {
-					if (!file.path.endsWith(".gpg-id")) {
-						file.path = file.path.split("/");
-						let filename = file.path.pop();
-						//remove .gpgp extension
+					if (file.path.endsWith(".gitattributes")) continue;
+
+					file.path = file.path.split("/");
+					let filename = file.path.pop();
+
+					let directoryPath = file.path.join('/');
+					if (directoryPath) directoryPath += "/";
+
+					let parent;
+					if (directoryPath == "") parent = this.root;
+					else parent = this.root.addDirectoryRecursive(directoryPath);
+
+					if (filename.endsWith(".gpg")) {
+						//remove .gpg extension
 						filename = filename.substring(0, filename.length - 4);
-						let directoryPath = file.path.join('/');
-						if (directoryPath) directoryPath += "/";
-
-						let parent;
-
-						if (directoryPath == "") parent = this.root;
-						else parent = this.root.addDirectoryRecursive(directoryPath);
 						passwordPromises.push(new Password(parent, filename, file.content));
+					}
+					else if (filename.endsWith('.gpg-id')) {
+						parent.ids = file.content.trim().split(" ");
 					}
 				}
 
@@ -71,6 +106,8 @@ module.exports = class JSPass {
 			}).catch((err) => reject(err));
 		});
 	}
+
+	commit(message) { return this.git.commit(message); }
 
 
 	/**

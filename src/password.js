@@ -113,13 +113,28 @@ module.exports = class Password {
 
 			new Password(destination, this.name, this.content).then((passwordCopy) => {
 				destination.passwords.push(passwordCopy);
+				let path = passwordCopy.getPath().substr(1) + ".gpg";
 
-				if (util.keysEqual(oldKeysIds, newKeysIds)) resolve(this);
+				if (util.keysEqual(oldKeysIds, newKeysIds)) {
+					try {
+						let git = this.getGit();
+						git.createFile(path, passwordCopy.content);
+					}
+					catch (err) { console.log(err); }
+					resolve(this);
+				}
 
 				let newKeys = this.parent.getKeysFor("public", newKeysIds);
 
-				passwordCopy.reencryptTo(newKeys).then( (pass) => { resolve(pass); })
-			});
+				passwordCopy.reencryptTo(newKeys).then((pass) => {
+					try {
+						let git = this.getGit();
+						git.createFile(path, pass.content);
+					}
+					catch (err) { console.log(err); }
+					resolve(pass);
+				}).catch((err) => reject(err));
+			}).catch((err) => reject(err));
 		})
 	}
 
@@ -145,15 +160,34 @@ module.exports = class Password {
 			let oldKeysIds = this.parent.getKeyIds();
 			let newKeysIds = destination.getKeyIds();
 
+			let oldPath = this.getPath().substr(1) + ".gpg";
+
 			this.parent.removePassword(this.name);
 			destination.passwords.push(this);
 			this.parent = destination;
 
-			if (util.keysEqual(oldKeysIds, newKeysIds)) resolve(this);
+			if (util.keysEqual(oldKeysIds, newKeysIds)) {
+				try {
+					let git = this.getGit();
+					let newPath = this.getPath().substr(1) + ".gpg";
+					git.moveFile(oldPath, newPath);
+				}
+				catch (err) { console.log(err); }
+				resolve(this);
+			}
 
 			let newKeys = this.parent.getKeysFor("public", newKeysIds);
 
-			this.reencryptTo(newKeys).then( (pass) => { resolve(pass); })
+			this.reencryptTo(newKeys).then( (pass) => {
+				try {
+					let git = this.getGit();
+					let newPath = this.getPath().substr(1) + ".gpg";
+					git.moveFile(oldPath, newPath);
+					git.changeContent(newPath, pass.content);
+				}
+				catch (err) { console.log(err); }
+				resolve(pass);
+			}).catch((err) => reject(err));
 		});
 	}
 
@@ -166,6 +200,13 @@ module.exports = class Password {
 	 * @throws {EntryExistsException} If password with same name already exist in directory.
 	 */
 	rename(name) {
+		try {
+			let git = this.getGit();
+			let path = this.getPath().substr(1) + ".gpg";
+			git.renameFile(path, name + ".gpg");
+		}
+		catch (err) { console.log(err); }
+
 		this.parent.passwordNameCheck(name);
 		this.name = name;
 		return this;
@@ -177,6 +218,13 @@ module.exports = class Password {
 	 * @method  Password#remove
 	 */
 	remove() {
+		try {
+			let git = this.getGit();
+			let path = this.getPath().substr(1) + ".gpg";
+			git.deleteFile(path);
+		}
+		catch (err) { console.log(err); }
+
 		this.parent.removePassword(this.name);
 		delete this;
 	}
