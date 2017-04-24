@@ -389,7 +389,9 @@ module.exports = class Directory {
 
 			for (let password of this.passwords) promises.push(password.reencryptTo(newKeys));
 
-			Promise.all(promises).then( () => { resolve(); });
+			Promise.all(promises).then( () => {
+				resolve();
+			}).catch((err) => console.log(err));
 		});
 	}
 
@@ -407,10 +409,16 @@ module.exports = class Directory {
 		return new Promise( (resolve, reject) => {
 			let newKeys = this.getKeysFor("public", newIds);
 			let promises = new Array();
-			for (let directory of this.directories) promises.push(reencryptTo(newKeys));
+			for (let directory of this.directories) promises.push(directory.reencryptTo(newKeys));
 			for (let password of this.passwords) promises.push(password.reencryptTo(newKeys));
 
-			Promise.all(promises).then( () => {
+			Promise.all(promises).then(() => {
+				try {
+					let git = this.getGit();
+					let path = this.getPath().substr(1) + ".gpg-id";
+					git.changeContent(path, newIds.join(" "));
+				}
+				catch (err) {}
 				this.ids = newIds;
 				resolve(this);
 			});

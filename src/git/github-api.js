@@ -158,6 +158,7 @@ module.exports = class GithubAPI {
 				file.content = Buffer(content).toString("base64");
 				file.encoding = "base64";
 			}
+			else file.content = content;
 		}
 	}
 

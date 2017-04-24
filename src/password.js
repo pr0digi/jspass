@@ -51,7 +51,7 @@ module.exports = class Password {
 			openpgp.encrypt(options).then( (ciphertext) => {
 				this.content = ciphertext.message.packets.write();
 				resolve(this);
-			});
+			}).catch((err) => reject(err));
 		});
 	}
 
@@ -73,18 +73,39 @@ module.exports = class Password {
 	}
 
 
+	getAvailableKeysInfo() {
+		let result = new Array();
+		for (let key of this.parent.getKeysFor("private", this.getKeyIds())) {
+			let users = new Array();
+			for (let user of key.users) users.push(user.userId.userid);
+			result.push({
+				users: users,
+				fingerprint: key.primaryKey.fingerprint
+			});
+		}
+
+		return result;
+	}
+
+
 	/**
 	 * Reencrypt content of the password to the current id's.
 	 * @param {Array<String>} ids Id's to reencrypt password to.
 	 * @return {[type]} [description]
 	 */
 	reencryptTo(newKeys) {
-		return new Promise( (resolve, reject) => {
+		return new Promise((resolve, reject) => {
 			this.decrypt().then( (content) => {
 				this.encrypt(content, newKeys).then( () => {
+					try {
+						let git = this.getGit();
+						let path = this.getPath().substr(1) + ".gpg";
+						git.changeContent(path, this.content);
+					}
+					catch (err) { console.log(err); }
 					resolve(this);
-				});
-			});
+				}).catch((err) => reject(err));
+			}).catch((err) => reject(err));
 		});
 	}
 
@@ -183,7 +204,6 @@ module.exports = class Password {
 					let git = this.getGit();
 					let newPath = this.getPath().substr(1) + ".gpg";
 					git.moveFile(oldPath, newPath);
-					git.changeContent(newPath, pass.content);
 				}
 				catch (err) { console.log(err); }
 				resolve(pass);
