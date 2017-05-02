@@ -21,12 +21,16 @@ module.exports = class JSPass {
 	/**
 	 * @param {Boolean} [storeKeys=true] - Store keys in the LocalStore.
 	 * @param {String|Number} [privateKeyCacheTime=600] - Time for which decrypted private keys should be cahed. Defaults to 10 minutes.
-	 * @param {String} [prefix=jspass-] - Prefix for saving in the LocalStore.
+	 * @param {String} [name=jspass-] - Name for saving in the LocalStore and IndexedDB.
 	 */
-	constructor(privateKeyCacheTime = 600, storeKeys = true, prefix = "jspass-") {
-		this.keyring = new openpgp.Keyring();
+	constructor(privateKeyCacheTime = 600, storeKeys = true, name = "jspass-") {
+		this.name = name;
+		let localStore = new openpgp.Keyring.localstore(name);
+		this.keyring = new openpgp.Keyring(localStore);
+
 		this.root = new Directory("root", this);
 		this.cache = new CachedKeyring(privateKeyCacheTime);
+		this.storeKeys = storeKeys;
 
 		//override OpenPGP.js methods for email check to also accept substring of user id
 		function getForAddress(email) {
@@ -69,6 +73,17 @@ module.exports = class JSPass {
 		else throw new Error("Unsupported git service.");
 
 		this.git.setRepository(repoUrl);
+	}
+
+
+	/**
+	 * Search for passwords with name containing regex pattern.
+	 * @method Directory#search
+	 * @param  {String} pattern - Pattern to search for.
+	 * @return {Array<Password>|null} Array with macthed password or null if no password has been found.
+	 */
+	search(pattern, deep = true) {
+		return this.root.search(pattern, deep);
 	}
 
 
@@ -125,7 +140,113 @@ module.exports = class JSPass {
 		}
 		else for (let keyItem of key.keys) this.keyring.privateKeys.push(keyItem);
 
+		if (this.storeKeys) this.keyring.store();
+
 		return null;
+	}
+
+
+	createDB() {
+		if (typeof window == "undefined") throw new Error("Databse is supported only in browser.");
+		let dbPromise = new Promise((resolve, reject) => {
+			let request = window.indexedDB.open(this.name, 1);
+
+			request.onerror = function(event) {
+				reject(new Error("Creating databse failed, error code: " + request.errorCode));
+			}
+
+			request.onupgradeneeded = function(event) {
+				let db = event.target.result;
+
+				let directories = db.createObjectStore("directories", {autoIncrement: true});
+				directories.createIndex("parentPath", "parentPath", { unique: false });
+				directories.createIndex("name", "name", { unique: false });
+				directories.createIndex("ids", "ids", { unique: false });
+
+				let passwords = db.createObjectStore("passwords", {autoIncrement: true});
+				passwords.createIndex("parentPath", "parentPath", { unique: false });
+				passwords.createIndex("name", "name", { unique: false });
+				passwords.createIndex("content", "content", { unique: false });
+			}
+
+			request.onsuccess = function(event) { resolve(event.target.result) }
+		});
+
+		return new Promise((resolve, reject) => {
+			dbPromise.then((db) => {
+				this.database = db;
+				this.database.onerror = function(event) {
+					throw new Error("Databse error, error code: " + event.target.errorCode);
+				}
+				resolve();
+			}).catch((err) => reject(err));
+		});
+	}
+
+
+	storeToDB() {
+		return new Promise((resolve, reject) => {
+			let transaction = this.database.transaction(["directories", "passwords"], "readwrite");
+
+			transaction.oncomplete = function(event) {
+				resolve();
+			}
+
+			transaction.onerror = function(event) {
+				reject(new Error("Error while saving passwords to the to database."));
+			}
+
+			let directories = transaction.objectStore("directories");
+			let passwords = transaction.objectStore("passwords");
+			this.root.storeToDB(directories, passwords);
+		});
+	}
+
+
+	loadFromDB() {
+		return new Promise((resolve, reject) => {
+			let transaction = this.database.transaction(["directories", "passwords"]);
+
+			let directories = new Array();
+			let directoriesStore = transaction.objectStore("directories");
+			directoriesStore.openCursor().onsuccess = function(event) {
+				let cursor = event.target.result;
+				if (cursor) {
+					directories.push(cursor.value);
+					cursor.continue();
+				}
+			}
+
+			let passwords = new Array();
+			let passwordsStore = transaction.objectStore("passwords");
+			passwordsStore.openCursor().onsuccess = function(event) {
+				let cursor = event.target.result;
+				if (cursor) {
+					passwords.push(cursor.value);
+					cursor.continue();
+				}
+			}
+
+			let rootDir = this.root;
+			transaction.oncomplete = function(event) {
+				rootDir.loadFromDB(directories, passwords).then(() => resolve()).catch((err) => reject(err));
+			}
+
+			transaction.onerror = function(event) {
+				reject(new Error("Cannot load directories and passwords from database."));
+			}
+		});
+	}
+
+
+	deleteDB() {
+		return new Promise((resolve, reject) => {
+			let request = window.indexedDB.deleteDatabase(this.name);
+
+			request.onsuccess = function(event) { resolve() }
+
+			request.onerror = function(event) { reject(new Error("Cannot delete database.")) }
+		});
 	}
 
 

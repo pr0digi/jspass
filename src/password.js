@@ -33,6 +33,25 @@ module.exports = class Password {
 	}
 
 
+	storeToDB(passwordsObjectStore) {
+		return new Promise((resolve, reject) => {
+			const pass = {
+				parentPath: this.parent.getPath(),
+				name: this.name,
+				content: this.content
+			}
+
+			let request = passwordsObjectStore.add(pass);
+
+			request.onsucess = function (event) { resolve() }
+
+			request.onerror = function(event) {
+				reject(new Error("Error while addng password to the database, erro code: " + event.target.error));
+			}
+		});
+	}
+
+
 	/**
 	 * Encrypt content and add it to the password.
 	 * @param  {String} content Content to be encrypted.
@@ -102,7 +121,7 @@ module.exports = class Password {
 						let path = this.getPath().substr(1) + ".gpg";
 						git.changeContent(path, this.content);
 					}
-					catch (err) { console.log(err); }
+					catch (err) { reject(err); }
 					resolve(this);
 				}).catch((err) => reject(err));
 			}).catch((err) => reject(err));
@@ -141,7 +160,7 @@ module.exports = class Password {
 						let git = this.getGit();
 						git.createFile(path, passwordCopy.content);
 					}
-					catch (err) { console.log(err); }
+					catch (err) { }
 					resolve(this);
 				}
 
@@ -152,7 +171,7 @@ module.exports = class Password {
 						let git = this.getGit();
 						git.createFile(path, pass.content);
 					}
-					catch (err) { console.log(err); }
+					catch (err) { }
 					resolve(pass);
 				}).catch((err) => reject(err));
 			}).catch((err) => reject(err));
@@ -193,7 +212,7 @@ module.exports = class Password {
 					let newPath = this.getPath().substr(1) + ".gpg";
 					git.moveFile(oldPath, newPath);
 				}
-				catch (err) { console.log(err); }
+				catch (err) { }
 				resolve(this);
 			}
 
@@ -205,7 +224,7 @@ module.exports = class Password {
 					let newPath = this.getPath().substr(1) + ".gpg";
 					git.moveFile(oldPath, newPath);
 				}
-				catch (err) { console.log(err); }
+				catch (err) { }
 				resolve(pass);
 			}).catch((err) => reject(err));
 		});
@@ -225,7 +244,7 @@ module.exports = class Password {
 			let path = this.getPath().substr(1) + ".gpg";
 			git.renameFile(path, name + ".gpg");
 		}
-		catch (err) { console.log(err); }
+		catch (err) { }
 
 		this.parent.passwordNameCheck(name);
 		this.name = name;
@@ -243,7 +262,7 @@ module.exports = class Password {
 			let path = this.getPath().substr(1) + ".gpg";
 			git.deleteFile(path);
 		}
-		catch (err) { console.log(err); }
+		catch (err) { }
 
 		this.parent.removePassword(this.name);
 		delete this;

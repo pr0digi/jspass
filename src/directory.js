@@ -16,7 +16,7 @@ module.exports = class Directory {
 	/**
 	 * @param  {String} name - Name of the directory
 	 * @param  {String} [parent] - Reference to parent directory.
-	 * If parent isn't specified, parent directory is set to this, meaning it is root directry.
+	 * If parent isn't specified, parent directory is set to this, meaning it is root directory.
 	 * @return {Directory} New directory.
 	 */
 	constructor(name, parent) {
@@ -74,6 +74,63 @@ module.exports = class Directory {
 	}
 
 
+	storeToDB(directories, passwords) {
+		return new Promise((resolve, reject) => {
+			let content = this;
+			const dir = {
+				parentPath: this.isRoot() ? "password-store" : this.parent.getPath(),
+				path: this.getPath(),
+				name: this.name,
+				ids: this.ids ? this.ids : null
+			}
+			let request = directories.add(dir);
+
+			request.onsuccess = function(event) {
+				let promises = new Array();
+				for (let password of content.passwords) { promises.push(password.storeToDB(passwords)) }
+				for (let directory of content.directories) { promises.push(directory.storeToDB(directories, passwords)) }
+
+				Promise.all(promises).then(() => { resolve() }).catch((err) => { reject(err) });
+			}
+
+			request.onerror = function(event) { reject(new Error("Error saving directory to databse.")) }
+		});
+	}
+
+
+	loadFromDB(directories, allPasswords) {
+		return new Promise((resolve, reject) => {
+			let currentPath = this.getPath();
+
+			let dirInfo = directories.find((dir) => { return dir.path == currentPath });
+			if (dirInfo && dirInfo.ids) this.ids = dirInfo.ids;
+
+			let contentPasswords = allPasswords.filter((password) => { return password.parentPath == currentPath });
+
+			let passwordPromises = new Array();
+			for (let password of contentPasswords) {
+				let pass = new Password(this, password.name, password.content);
+				passwordPromises.push(pass);
+			}
+
+			Promise.all(passwordPromises).then((passwords) => {
+				this.passwords = passwords;
+				let directoryPromises = new Array();
+				let contentDirectories = directories.filter((directory) => { return directory.parentPath == currentPath });
+				for (let directory of contentDirectories) {
+					let dir = new Directory(directory.name, this);
+					directoryPromises.push(dir.loadFromDB(directories, allPasswords));
+				}
+
+				Promise.all(directoryPromises).then((directories) => {
+					this.directories = directories;
+					resolve(this);
+				}).catch((err) => reject(err));
+			}).catch((err) => reject(err));
+		});
+	}
+
+
 	/**
 	 * Check if password with name already exists in directory.
 	 * This method throws if directory exists.
@@ -113,6 +170,10 @@ module.exports = class Directory {
 		return new Promise( (resolve, reject) => {
 			new Password(this, name, content).then( (password) => {
 				this.passwords.push(password);
+				try {
+					this.getGit().createFile(password.getPath().substr(1) + ".gpg", password.content);
+				}
+				catch (err) {}
 				resolve(password);
 			});
 		});
@@ -321,12 +382,31 @@ module.exports = class Directory {
 
 
 	/**
-	 * Search for passwords with name containing pattern.
+	 * Search for passwords with name containing regex pattern.
 	 * @method Directory#search
 	 * @param  {String} pattern - Pattern to search for.
 	 * @return {Array<Password>|null} Array with macthed password or null if no password has been found.
 	 */
-	search(pattern) {}
+	search(pattern, deep = true) {
+		if (typeof pattern == "string") {
+			pattern =  pattern.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+			pattern = new RegExp(pattern);
+		}
+		else if (pattern.constructor.name != "RegExp") throw new Error("Invalid pattern");
+		let matches = new Array();
+
+		for (let password of this.passwords) {
+			if (pattern.test(password.name)) matches.push(password.getPath());
+		}
+
+		if (deep) {
+			for (let directory of this.directories) {
+				matches.concat(directory.search(pattern, true));
+			}
+		}
+
+		return matches;
+	}
 
 
 	/**
@@ -391,7 +471,7 @@ module.exports = class Directory {
 
 			Promise.all(promises).then( () => {
 				resolve();
-			}).catch((err) => console.log(err));
+			}).catch((err) => reject(err));
 		});
 	}
 
