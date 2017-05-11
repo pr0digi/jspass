@@ -1,13 +1,12 @@
 /**
  * JSPass root module.
- * @requires password
  */
 
 "use strict";
 
 const openpgp = require("openpgp");
 const Directory = require("./directory");
-const CachedKeyring = require("./cached-keyring");
+const UnlockedKeyring = require("./unlocked-keyring");
 const GithubAPI = require('./git/github-api');
 const Password = require('./password');
 
@@ -20,16 +19,16 @@ const Password = require('./password');
 module.exports = class JSPass {
 	/**
 	 * @param {Boolean} [storeKeys=true] - Store keys in the LocalStore.
-	 * @param {String|Number} [privateKeyCacheTime=600] - Time for which decrypted private keys should be cahed. Defaults to 10 minutes.
+	 * @param {String|Number} [unlockedKeyStoreTime=600] - Time for which decrypted private keys should be cahed. Defaults to 10 minutes.
 	 * @param {String} [name=jspass-] - Name for saving in the LocalStore and IndexedDB.
 	 */
-	constructor(privateKeyCacheTime = 600, storeKeys = true, name = "jspass-") {
+	constructor(unlockedKeyStoreTime = 600, storeKeys = true, name = "jspass-") {
 		this.name = name;
 		let localStore = new openpgp.Keyring.localstore(name);
 		this.keyring = new openpgp.Keyring(localStore);
 
 		this.root = new Directory("root", this);
-		this.cache = new CachedKeyring(privateKeyCacheTime);
+		this.unlockedKeyring = new UnlockedKeyring(unlockedKeyStoreTime);
 		this.storeKeys = storeKeys;
 
 		//override OpenPGP.js methods for email check to also accept substring of user id
@@ -84,6 +83,11 @@ module.exports = class JSPass {
 	 */
 	search(pattern, deep = true) {
 		return this.root.search(pattern, deep);
+	}
+
+
+	setUnlockedTime(time) {
+		this.unlockedKeyring.unlockedKeyStoreTime = time;
 	}
 
 
@@ -144,6 +148,50 @@ module.exports = class JSPass {
 
 		return null;
 	}
+
+
+	/**
+	 * Decrypt private keys for given user id with password.
+	 * By default, key will stay decrypted for 10 minutes. Every time the key is used, timer is reset.
+	 * @method JSPass#decryptKey
+	 * @throws {Error} If id isn't in keyring.
+	 * @param {String} id - Fingerprint or long key id of the key to be decrypted.
+	 * @param {String} password - Password for the private key to be decrypted.
+	 * @returns {Boolean} True if key was decrypted, false otherwise.
+	 */
+	decryptKey(id, password) {
+		let key = this.keyring.privateKeys.getForId(id);
+		if (key == null) throw new Error("ID isn't in keyring.");
+		let armored = key.armor();
+
+		let keyCopy = openpgp.key.readArmored(armored).keys[0];
+		if (keyCopy.decrypt(password)) {
+			this.unlockedKeyring.privateKeys.push(keyCopy);
+			return true;
+		}
+		else return false;
+	}
+
+
+	/**
+	 * Get id's for root directory.
+	 * @method JSPass#getIds
+	 * @return {Array<String>} Id's of directory.
+	 */
+	getKeyIds() { return this.root.getKeyIds(); }
+
+
+	/**
+	 * Set id's for root directory. All passwords will be reencrypted using new ids.
+	 * @method JSPass#setIds
+	 * @param {String|Array<String>} ids Fingerprint or long key id.
+	 * @return {Promise<Directory>} Promise of password store with reencrypted passwords.
+	 * @throws {InvalidIdException} If some id isn't in keyring.
+   * @throws {NoPrivateKeyException} If no private key for containing password exists in keyring.
+	 * @throws {PrivateKeyEncryptedException} If no private key for containing password is decrypted in unlocked keyring.
+	 * @return {Promise<Directory>} Promise of directory with all passwords reencrypted to new ids.
+	 */
+	setKeyIds(keyIds) { return this.root.setKeyIds(keyIds);	}
 
 
 	createDB() {
@@ -251,50 +299,6 @@ module.exports = class JSPass {
 
 
 	/**
-	 * Decrypt private keys for given user id with password.
-	 * By default, key will stay decrypted for 10 minutes. Every time the key is used, timer is reset.
-	 * @method JSPass#decryptKey
-	 * @throws {Error} If id isn't in keyring.
-	 * @param {String} id - Fingerprint or long key id of the key to be decrypted.
-	 * @param {String} password - Password for the private key to be decrypted.
-	 * @returns {Boolean} True if key was decrypted, false otherwise.
-	 */
-	decryptKey(id, password) {
-		let key = this.keyring.privateKeys.getForId(id);
-		if (key == null) throw new Error("ID isn't in keyring.");
-		let armored = key.armor();
-
-		let keyCopy = openpgp.key.readArmored(armored).keys[0];
-		if (keyCopy.decrypt(password)) {
-			this.cache.privateKeys.push(keyCopy);
-			return true;
-		}
-		else return false;
-	}
-
-
-	/**
-	 * Get id's for root directory.
-	 * @method JSPass#getIds
-	 * @return {Array<String>} Id's of directory.
-	 */
-	getKeyIds() { return this.root.getKeyIds(); }
-
-
-	/**
-	 * Set id's for root directory. All passwords will be reencrypted using new ids.
-	 * @method JSPass#setIds
-	 * @param {String|Array<String>} ids Fingerprint or long key id.
-	 * @return {Promise<Directory>} Promise of password store with reencrypted passwords.
-	 * @throws {InvalidIdException} If some id isn't in keyring.
-   * @throws {NoPrivateKeyException} If no private key for containing password exists in keyring.
-	 * @throws {PrivateKeyEncryptedException} If no private key for containing password is decrypted in cache.
-	 * @return {Promise<Directory>} Promise of directory with all passwords reencrypted to new ids.
-	 */
-	setKeyIds(keyIds) { return this.root.setKeyIds(keyIds);	}
-
-
-	/**
 	 * Insert password in the password store. If path doesn't exist, it is created.
 	 * @method JSPass#insertPassword
 	 * @throws {NoInitException} If store path wasn't previously initialized.
@@ -304,20 +308,10 @@ module.exports = class JSPass {
 	 * @param {String} content - Content of the password.
 	 * @returns {Promise<Password>} - Password if store was previously initialized.
 	 */
-	insertPassword(destination, name, content) {
+	insertPasswordByPath(destination, name, content) {
 		let destinationDir = this.root.addDirectoryRecursive(destination.substring(1));
 		return destinationDir.addPassword(name, content);
 	}
-
-	/**
-	 * Add password to store. Password is automatically encrypted to the corresponding keys of directory.
-	 * @method Directory#addPassword
-	 * @param {String} name - Name of the password.
-	 * @param {String} content - Content of the password.
-	 * @throws {EntryExistsException} If password with same name already exists in direcotry.
-	 * @return {Promise<Password>} Promise of new password.
-	 */
-	addPassword(name, content) { return this.root.addPassword(name, content);	}
 
 
 	/**
@@ -338,26 +332,6 @@ module.exports = class JSPass {
 
 
 	/**
-	 * Get password from root directory.
-	 * @method JSPass#getPassword
-	 * @param {String} name Name of the password.
-	 * @return {Password} Password with specified name.
-	 * @throws {InvalidEntryException} If password with specified name doesnt exist.
-	 */
-	getPassword(name) { return this.root.getPassword(name); }
-
-
-	/**
-	 * Get directory with specified name from root directory.
-	 * @method Directory#getDirectory
-	 * @param  {String} name Name of the directory to return.
-	 * @return {Directory} Directory with specified name.
-	 * @throws {InvalidEntryException} If directory with specified name doesn't exist.
-	 */
-	getDirectory(name) { return this.root.getDirectory(name); }
-
-
-	/**
 	 * Get directory object from the store.
 	 * @method  JSPass#getDirectoryByPath
 	 * @param {String} path Path of the directory starting with "/" and ending with it's name, with optional "/" on the end.
@@ -373,22 +347,6 @@ module.exports = class JSPass {
 
 		return currentDir;
 	}
-
-
-	/**
-	 * Add new directory to the root.
-	 * @method Directory#addDirectory
-	 * @param {String} name Name of the enw directory.
-	 * @return {Directory} Newly created directory.
-	 */
-	addDirectory(name) { return this.root.addDirectory(name); }
-
-
-	/**
-	 * Get root directory of the store.
-	 * @return {Directory} Root directory.
-	 */
-	getRoot() { return this.root; }
 
 
 	/**
@@ -423,10 +381,57 @@ module.exports = class JSPass {
 	 * @throws If path doesn't exist.
 	 * @param {String} path - Path of the file or folder.
 	 */
-	removeByPath(path) {
+	removeItemByPath(path) {
 		let item = this.getItemByPath(path);
 		item.remove();
 	}
+
+
+	/**
+	 * Add password to store. Password is automatically encrypted to the corresponding keys of directory.
+	 * @method Directory#addPassword
+	 * @param {String} name - Name of the password.
+	 * @param {String} content - Content of the password.
+	 * @throws {EntryExistsException} If password with same name already exists in direcotry.
+	 * @return {Promise<Password>} Promise of new password.
+	 */
+	addPassword(name, content) { return this.root.addPassword(name, content);	}
+
+
+	/**
+	 * Get password from root directory.
+	 * @method JSPass#getPassword
+	 * @param {String} name Name of the password.
+	 * @return {Password} Password with specified name.
+	 * @throws {InvalidEntryException} If password with specified name doesnt exist.
+	 */
+	getPassword(name) { return this.root.getPassword(name); }
+
+
+	/**
+	 * Add new directory to the root.
+	 * @method Directory#addDirectory
+	 * @param {String} name Name of the enw directory.
+	 * @return {Directory} Newly created directory.
+	 */
+	addDirectory(name) { return this.root.addDirectory(name); }
+
+
+	/**
+	 * Get directory with specified name from root directory.
+	 * @method Directory#getDirectory
+	 * @param  {String} name Name of the directory to return.
+	 * @return {Directory} Directory with specified name.
+	 * @throws {InvalidEntryException} If directory with specified name doesn't exist.
+	 */
+	getDirectory(name) { return this.root.getDirectory(name); }
+
+
+	/**
+	 * Get root directory of the store.
+	 * @return {Directory} Root directory.
+	 */
+	getRoot() { return this.root; }
 
 
 	/**

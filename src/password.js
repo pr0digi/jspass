@@ -11,7 +11,7 @@ const util = require("./util");
 
 
 /**
- * Class representing password. Password content is encrypted using OpenPGP.js library.
+ * Prototype representing password. Password content is encrypted using OpenPGP.js library.
  * Password is automatically encrypted for user ids of containing directory.
  * @constructs Password
  */
@@ -104,6 +104,20 @@ module.exports = class Password {
 		}
 
 		return result;
+	}
+
+
+	/**
+	 * Returns 16-character key id's of the password.
+	 * @method  Password#getKeyIds
+	 * @return {String} - 16-character key id's for the password.
+	 */
+	getKeyIds() {
+		let keyIds = new Array();
+		for (let id of openpgp.message.read(this.content).getEncryptionKeyIds()) {
+			keyIds.push(id.toHex());
+		}
+		return keyIds;
 	}
 
 
@@ -274,7 +288,7 @@ module.exports = class Password {
 	 * @method Password#getContent
 	 * @return {Promise<String>} Promise of the decrypted content of password.
 	 * @throws {NoPrivateKeyException} If no private key for this password exists in keyring.
-	 * @throws {PrivateKeyEncryptedException} If no private key for this password is decrypted in cache.
+	 * @throws {PrivateKeyEncryptedException} If no private key for this password is decrypted in UnlockedKeyring.
 	 */
 	getContent() { return this.decrypt(); }
 
@@ -307,7 +321,7 @@ module.exports = class Password {
 	/**
 	 * Check whether private key for password is decrypted.
 	 * @method  Password#isDecryptable
-	 * @returns {Boolean} True if private key for password is decrypted in cache.
+	 * @returns {Boolean} True if private key for password is decrypted in UnlockedKeyring.
 	 */
 	isDecryptable() {
 		try {
@@ -317,20 +331,6 @@ module.exports = class Password {
 		catch (err) {
 			return false;
 		}
-	}
-
-
-	/**
-	 * Returns 16-character key id's of the password.
-	 * @method  Password#getKeyIds
-	 * @return {String} - 16-character key id's for the password.
-	 */
-	getKeyIds() {
-		let keyIds = new Array();
-		for (let id of openpgp.message.read(this.content).getEncryptionKeyIds()) {
-			keyIds.push(id.toHex());
-		}
-		return keyIds;
 	}
 
 

@@ -4,8 +4,6 @@
  * Util module
  */
 
-const eports = module.exports;
-
 exports.keysEqual = function (keys1, keys2) {
 	if (keys1.length != keys2.length) return false;
 

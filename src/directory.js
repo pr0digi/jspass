@@ -8,7 +8,7 @@ const Password = require("./password");
 const util = require("./util")
 
 /**
- * Class representing directory.
+ * Prototype representing directory.
  * All password added to the directory are automatically encrypted to it's corresponding user ids.
  * @constructs Directory
  */
@@ -65,16 +65,22 @@ module.exports = class Directory {
 
 
 	/**
-	 * Get private key cache.
+	 * Get private key unlocked keyring.
 	 * @return {Keyring} OpenPGP.js keyring.
 	 */
-	getCache() {
-		if (this.isRoot()) return this.parent.cache;
-		else return this.parent.getCache();
+	getUnlockedKeyring() {
+		if (this.isRoot()) return this.parent.unlockedKeyring;
+		else return this.parent.getgetUnlockedKeyring();
 	}
 
 
-	storeToDB(directories, passwords) {
+	/**
+	 * Store directory to IndexedDB.
+	 * @param  {ObjectStore} directoriesOS ObjectStore for directories.
+	 * @param  {ObjectStore} passwordsOS   ObjectStore for passwords.
+	 * @return {Promise<undefined>}        Promise, if resolved, directory was sucessfully saved to database.
+	 */
+	storeToDB(directoriesOS, passwordsOS) {
 		return new Promise((resolve, reject) => {
 			let content = this;
 			const dir = {
@@ -83,12 +89,12 @@ module.exports = class Directory {
 				name: this.name,
 				ids: this.ids ? this.ids : null
 			}
-			let request = directories.add(dir);
+			let request = directoriesOS.add(dir);
 
 			request.onsuccess = function(event) {
 				let promises = new Array();
-				for (let password of content.passwords) { promises.push(password.storeToDB(passwords)) }
-				for (let directory of content.directories) { promises.push(directory.storeToDB(directories, passwords)) }
+				for (let password of content.passwords) { promises.push(password.storeToDB(passwordsOS)) }
+				for (let directory of content.directories) { promises.push(directory.storeToDB(directoriesOS, passwordsOS)) }
 
 				Promise.all(promises).then(() => { resolve() }).catch((err) => { reject(err) });
 			}
@@ -98,11 +104,17 @@ module.exports = class Directory {
 	}
 
 
-	loadFromDB(directories, allPasswords) {
+	/**
+	 * Load directory from IndexedDB.
+	 * @param  {Array<Object>} allDirectories  All directories from IndexedDB.
+	 * @param  {Array<Object>} allPasswords    All passwords from IndexedDB.
+	 * @return {Promise<Directory>}            Promise of directory with content loaded from IndexedDB.
+	 */
+	loadFromDB(allDirectories, allPasswords) {
 		return new Promise((resolve, reject) => {
 			let currentPath = this.getPath();
 
-			let dirInfo = directories.find((dir) => { return dir.path == currentPath });
+			let dirInfo = allDirectories.find((dir) => { return dir.path == currentPath });
 			if (dirInfo && dirInfo.ids) this.ids = dirInfo.ids;
 
 			let contentPasswords = allPasswords.filter((password) => { return password.parentPath == currentPath });
@@ -113,15 +125,18 @@ module.exports = class Directory {
 				passwordPromises.push(pass);
 			}
 
+			//save passwords after they're objects have been created
 			Promise.all(passwordPromises).then((passwords) => {
 				this.passwords = passwords;
 				let directoryPromises = new Array();
-				let contentDirectories = directories.filter((directory) => { return directory.parentPath == currentPath });
+				//find children directories of this directory and load their content
+				let contentDirectories = allDirectories.filter((directory) => { return directory.parentPath == currentPath });
 				for (let directory of contentDirectories) {
 					let dir = new Directory(directory.name, this);
 					directoryPromises.push(dir.loadFromDB(directories, allPasswords));
 				}
 
+				//save created directories as childrens after they're initialized with their passwords
 				Promise.all(directoryPromises).then((directories) => {
 					this.directories = directories;
 					resolve(this);
@@ -203,6 +218,17 @@ module.exports = class Directory {
 	getAllPasswords() { return this.passwords; }
 
 
+
+	removePassword(name) {
+		for (let i=0; i<this.passwords.length; i++) {
+			if (this.passwords[i].name == name) {
+				this.passwords.splice(i, 1);
+				return;
+			}
+		}
+	}
+
+
 	/**
 	 * Add new directory.
 	 * @method Directory#addDirectory
@@ -265,6 +291,20 @@ module.exports = class Directory {
 	 * @return {Array<Directory>} All directories in directory.
 	 */
 	getAllDirectories() { return this.directories; }
+
+
+	/**
+	 * Remove directory from array of directories.
+	 * @param  {String} name Name of directory to remove.
+	 */
+	removeDirectory(name) {
+		for (let i=0; i<this.directories.length; i++) {
+			if (this.directories[i].name == name) {
+				this.directories.splice(i, 1);
+				return;
+			}
+		}
+	}
 
 
 	/**
@@ -344,30 +384,6 @@ module.exports = class Directory {
 	}
 
 
-	removePassword(name) {
-		for (let i=0; i<this.passwords.length; i++) {
-			if (this.passwords[i].name == name) {
-				this.passwords.splice(i, 1);
-				return;
-			}
-		}
-	}
-
-
-	/**
-	 * Remove directory from array of directories.
-	 * @param  {String} name Name of directory to remove.
-	 */
-	removeDirectory(name) {
-		for (let i=0; i<this.directories.length; i++) {
-			if (this.directories[i].name == name) {
-				this.directories.splice(i, 1);
-				return;
-			}
-		}
-	}
-
-
 	/**
 	 * Remove directory.
 	 * @method  Directory#remove
@@ -435,18 +451,48 @@ module.exports = class Directory {
 
 	getUnlockedPrivateKey(keyIds) {
 		if (!keyIds) keyIds = this.getKeyIds();
-		let cache = this.getCache();
+		let keyring = this.getUnlockedKeyring();
 
 		for (let id of keyIds) {
-			let key = cache.privateKeys.getForId(id, true);
+			let key = keyring.privateKeys.getForId(id, true);
 			if (key) return key;
 		}
 
 		for (let id of keyIds) {
-			let key = cache.privateKeys.getForAddress(id);
+			let key = keyring.privateKeys.getForAddress(id);
 			if (key.length != 0) return key;
 		}
 		throw new Error("No unlocked private key found.");
+	}
+
+
+	/**
+	 * Set id's for directory. All passwords will be reencrypted using new ids.
+	 * @method Directory#setKeyIds
+	 * @param {Array<String>} Fingerprint or long key id.
+	 * @return {Promise<Directory>} Promise of directory with reencrypted passwords.
+	 * @throws {InvalidIdException} If id isn't in keyring.
+   * @throws {NoPrivateKeyException} If no private key for containing password exists in keyring.
+	 * @throws {PrivateKeyEncryptedException} If no private key for containing password is decrypted in unlocked keyring.
+	 */
+	setKeyIds(newIds) {
+		return new Promise( (resolve, reject) => {
+			let newKeys = this.getKeysFor("public", newIds);
+			let promises = new Array();
+			for (let directory of this.directories) promises.push(directory.reencryptTo(newKeys));
+			for (let password of this.passwords) promises.push(password.reencryptTo(newKeys));
+
+			Promise.all(promises).then(() => {
+				try {
+					let git = this.getGit();
+					let path = this.getPath().substr(1) + ".gpg-id";
+					git.changeContent(path, newIds.join(" "));
+				}
+				catch (err) {}
+				this.ids = newIds;
+				resolve(this);
+			});
+		});
 	}
 
 
@@ -472,36 +518,6 @@ module.exports = class Directory {
 			Promise.all(promises).then( () => {
 				resolve();
 			}).catch((err) => reject(err));
-		});
-	}
-
-
-	/**
-	 * Set id's for directory. All passwords will be reencrypted using new ids.
-	 * @method Directory#setKeyIds
-	 * @param {Array<String>} Fingerprint or long key id.
-	 * @return {Promise<Directory>} Promise of directory with reencrypted passwords.
-	 * @throws {InvalidIdException} If id isn't in keyring.
-   * @throws {NoPrivateKeyException} If no private key for containing password exists in keyring.
-	 * @throws {PrivateKeyEncryptedException} If no private key for containing password is decrypted in cache.
-	 */
-	setKeyIds(newIds) {
-		return new Promise( (resolve, reject) => {
-			let newKeys = this.getKeysFor("public", newIds);
-			let promises = new Array();
-			for (let directory of this.directories) promises.push(directory.reencryptTo(newKeys));
-			for (let password of this.passwords) promises.push(password.reencryptTo(newKeys));
-
-			Promise.all(promises).then(() => {
-				try {
-					let git = this.getGit();
-					let path = this.getPath().substr(1) + ".gpg-id";
-					git.changeContent(path, newIds.join(" "));
-				}
-				catch (err) {}
-				this.ids = newIds;
-				resolve(this);
-			});
 		});
 	}
 }
