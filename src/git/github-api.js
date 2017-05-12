@@ -1,8 +1,7 @@
 "use strict"
 
-function GithubAPI(userAgent) {
+function GithubAPI() {
 	this.hostname = "api.github.com";
-	this.userAgent = userAgent;
 }
 
 if (typeof window == 'undefined') {
@@ -96,14 +95,26 @@ GithubAPI.prototype.createAuthorizationToken = function(options, username, passw
 GithubAPI.prototype.setToken = function(token) { this.authToken = token; }
 
 
-GithubAPI.prototype.setRepository = function(url) {
+/**
+ * Set repository url and user agent.
+ * @param {String} url       URL of the repository.
+ * @param {String} userAgent User agent to use for request.
+ */
+GithubAPI.prototype.setRepository = function(url, userAgent) {
 	let match = /(?:https:\/\/)?(?:www\.)?github.com\/([^\/]+)\/(.+)/.exec(url);
 	if (!match) throw new Error("Invalid repository URL.");
 	this.username = match[1];
 	this.repoName = match[2];
+
+	this.userAgent = userAgent;
 }
 
 
+/**
+ * Download last commit and tree
+ * @method  GithubAPI#getLastCommitAndTree
+ * @return {Promise} If resolved, last commit and tree were succesfully downloaded.
+ */
 GithubAPI.prototype.getLastCommitAndTree = function() {
 	return new Promise((resolve, reject) => {
 		let options = {
@@ -128,6 +139,12 @@ GithubAPI.prototype.getLastCommitAndTree = function() {
 }
 
 
+/**
+ * Get file from local tree by its path.
+ * @method  GithubAPI#getFileByPath
+ * @param  {String} path Path of the file.
+ * @return {Object}      File requested.
+ */
 GithubAPI.prototype.getFileByPath = function(path) {
 	for (let file of this.currentTree.tree) {
 		if (file.path == path) return file;
@@ -136,6 +153,12 @@ GithubAPI.prototype.getFileByPath = function(path) {
 }
 
 
+/**
+ * Get file from local tree by its index.
+ * @method  GithubAPI#getFileByIndex
+ * @param  {String} path Path of the file.
+ * @return {Number}      Index of the file.
+ */
 GithubAPI.prototype.getFileIndex = function(path) {
 	for (let index=0; index<this.currentTree.tree.length; index++) {
 		if (this.currentTree.tree[index].path == path) { return index };
@@ -143,6 +166,12 @@ GithubAPI.prototype.getFileIndex = function(path) {
 }
 
 
+/**
+ * Create file in local tree.
+ * @method  GithubAPI#createFile
+ * @param  {String} path    Path of the file.
+ * @param  {String} content Content of the file.
+ */
 GithubAPI.prototype.createFile = function(path, content) {
 	try { this.getFileByPath(path); }
 	catch (err) {}
@@ -164,6 +193,11 @@ GithubAPI.prototype.createFile = function(path, content) {
 }
 
 
+/**
+ * Delete file from local tree.
+ * @method  GithubAPI#deleteFile
+ * @param  {String} path Path of the file.
+ */
 GithubAPI.prototype.deleteFile = function(path) {
 	let index = this.getFileIndex(path);
 
@@ -173,6 +207,12 @@ GithubAPI.prototype.deleteFile = function(path) {
 }
 
 
+/**
+ * Change content of a file in local tree.
+ * @method  GithubAPI#changeContent
+ * @param  {String} path    Path of the file.
+ * @param  {String} content New content of the file.
+ */
 GithubAPI.prototype.changeContent = function(path, content) {
 	let file = this.getFileByPath(path);
 
@@ -187,7 +227,12 @@ GithubAPI.prototype.changeContent = function(path, content) {
 }
 
 
-
+/**
+ * Rename file in the local tree.
+ * @method  GithubAPI#renameFile
+ * @param  {String} path    Path of the file.
+ * @param  {String} newName New name of the file.
+ */
 GithubAPI.prototype.renameFile = function(path, newName) {
 	let file = this.getFileByPath(path);
 	path = path.split('/');
@@ -196,12 +241,24 @@ GithubAPI.prototype.renameFile = function(path, newName) {
 }
 
 
-GithubAPI.prototype.moveFile = function(oldPath, newPath) {
-	let file = this.getFileByPath(oldPath);
+/**
+ * Move file in the local tree.
+ * @method  GithubAPI#moveFile
+ * @param  {String} currentPath Current path of the file.
+ * @param  {String} newPath New path of the file.
+ */
+GithubAPI.prototype.moveFile = function(currentPath, newPath) {
+	let file = this.getFileByPath(currentPath);
 	file.path = newPath;
 }
 
 
+/**
+ * Copy file in local tree.
+ * @method  GithubAPI#copyFile
+ * @param  {String} filePath Path of the file.
+ * @param  {String} copyPath Path where file should be copied.
+ */
 GithubAPI.prototype.copyFile = function(filePath, copyPath) {
 	let file = this.getFileByPath(filePath);
 	this.currentTree.tree.push({
@@ -213,6 +270,12 @@ GithubAPI.prototype.copyFile = function(filePath, copyPath) {
 }
 
 
+/**
+ * Create BLOBs from edited files in remote repository.
+ * Update local file with their new sha.
+ * @method  GithubAPI#createBlobs
+ * @return {Promise} If resolved, blobs were created succesfully for all files.
+ */
 GithubAPI.prototype.createBlobs = function() {
 	return new Promise((resolve, reject) => {
 		let changedFiles = new Array();
@@ -246,6 +309,13 @@ GithubAPI.prototype.createBlobs = function() {
 	});
 }
 
+
+/**
+ * Create new tree in remote repository with contents of local tree.
+ * Update local tree with its new sha.
+ * @method  GithubAPI#createTree
+ * @return {Promise} If resolved, tree was succesfully created.
+ */
 GithubAPI.prototype.createTree = function() {
 	return new Promise((resolve, reject) => {
 		this.createBlobs().then(() => {
@@ -269,6 +339,13 @@ GithubAPI.prototype.createTree = function() {
 }
 
 
+/**
+ * Create new commit in remote repository and set it as master.
+ * @method  GithubAPI#commit
+ * @param  {String} message Commit message.
+ * @return {Promise}        If resolved, commit was succesfully pushed into remote repository
+ *                          and reference to the master branch was updated.
+ */
 GithubAPI.prototype.commit = function(message) {
 	return new Promise((resolve, reject) => {
 		if (!this.currentTree || !this.lastCommit) reject(new Error("Last tree or commit unavailable."));
@@ -304,56 +381,44 @@ GithubAPI.prototype.commit = function(message) {
 	});
 }
 
-
-GithubAPI.prototype.getAllFiles = function() {
+/**
+ * Get all files from github repository and create local tree from them.
+ * @method  GithubAPI#clone
+ * @return {Promise<Array<Object>>} Returns promise of array with all files from repository.
+ *                                  This object needs to have two properties, path and content.
+ */
+GithubAPI.prototype.clone = function() {
 	return new Promise((resolve, reject) => {
-		if (!this.currentTree) reject(new Error('No tree available.'));
-		this.cleanTree();
-		let promises = [];
+		this.getLastCommitAndTree().then(() => {
+			if (!this.currentTree) reject(new Error('No tree available.'));
+			this.cleanTree();
+			let promises = [];
 
-		for (let file of this.currentTree.tree) {
-			promises.push(this.getFileContent(file.sha))
-		}
-
-		Promise.all(promises).then((response) => {
-			let files = new Array();
-			let content;
-			for (let i=0; i<this.currentTree.tree.length; i++) {
-				if (this.currentTree.tree[i].path == ".gitattributes") continue;
-				if (this.currentTree.tree[i].path.endsWith('.gpg')) {
-					if (typeof window == 'undefined') {
-						let buffer = Buffer(response[i].content, 'base64');
-
-						content = new Uint8Array(buffer);
-					}
-					else {
-						let buffer = atob(response[i].content);
-						content = new Uint8Array(buffer.length);
-						for (let i=0; i<buffer.length; i++) {
-							content[i] = buffer.charCodeAt(i);
-						}
-					}
-				}
-				else {
-					if (typeof window == "undefined") {
-						content = Buffer(response[i].content, 'base64').toString();
-					}
-					else {
-						content = atob(response[i].content);
-					}
-				}
-
-
-				files.push({
-					path: this.currentTree.tree[i].path,
-					content: content
-				});
+			for (let file of this.currentTree.tree) {
+				promises.push(this.getFileContent(file.sha))
 			}
-			resolve(files);
+
+			Promise.all(promises).then((response) => {
+				let files = new Array();
+				for (let i=0; i<this.currentTree.tree.length; i++) {
+					files.push({
+						path: this.currentTree.tree[i].path,
+						content: response[i].content
+					});
+				}
+				resolve(files);
+			}).catch((err) => reject(err));
 		}).catch((err) => reject(err));
 	});
 }
 
+
+/**
+ * Get contents of the file from remote repository by its sha.
+ * @method  GithubAPI#getFileContent
+ * @param  {String} sha SHA of the file requested.
+ * @return {Promise<Object>}     Object with file contents.
+ */
 GithubAPI.prototype.getFileContent = function(sha) {
 	return new Promise((resolve, reject) => {
 		const options = {
@@ -368,6 +433,12 @@ GithubAPI.prototype.getFileContent = function(sha) {
 }
 
 
+/**
+ * Delete size and url properties from local tree objects.
+ * Also remove subtrees, this is due to the fact
+ * that subdirectory doesn't update while there's old tree reference.
+ * @method  GithubAPI#cleanTree
+ */
 GithubAPI.prototype.cleanTree = function() {
 	for (let item of this.currentTree.tree) {
 		if ('size' in item) delete item.size;
