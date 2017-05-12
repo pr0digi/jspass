@@ -4,15 +4,16 @@
   "description": "JavaScript implementation of standard UNIX password manager pass.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha",
+    "bundle": "browserify --external https -p browserify-derequire --standalone JSPass -o dist/bundle src/jspass",
+    "docs": "esdoc -c esdoc.json"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/pr0digi/jspass.git"
   },
   "keywords": [
-    "password",
-    "manager"
+    "password manager"
   ],
   "author": "Michal Chroust",
   "license": "ISC",
@@ -25,7 +26,9 @@
   },
   "devDependencies": {
     "browserify": "^14.3.0",
-    "jsdoc": "^3.4.3",
-    "worker-loader": "^0.8.0"
+    "browserify-derequire": "^0.9.4",
+    "chai": "^3.5.0",
+    "esdoc": "^3.4.3",
+    "mocha": "^3.3.0"
   }
 }
