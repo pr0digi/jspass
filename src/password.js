@@ -99,6 +99,7 @@ Password.prototype.decrypt = function() {
 }
 
 /**
+ * Object with informations about key.
  * @typedef {Object} KeyInfo
  * @property {Array<String>} users Id's of users.
  * @property {String} fingerprint Primary key fingerprint.
