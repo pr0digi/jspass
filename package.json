@@ -6,7 +6,7 @@
   "scripts": {
     "test": "mocha",
     "bundle": "browserify --external https -p browserify-derequire --standalone JSPass -o dist/bundle src/jspass",
-    "docs": "esdoc -c esdoc.json"
+    "doc": "jsdoc -d ./doc/ src/jspass.js src/password.js src/directory.js src/util.js src/unlocked-keyring.js src/git/github-api.js"
   },
   "repository": {
     "type": "git",
