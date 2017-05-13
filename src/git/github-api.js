@@ -1,5 +1,15 @@
 "use strict"
 
+/**
+ * GithubAPI module
+ */
+
+/**
+ * Prototype representing API to save and retrieve files from github.
+ * @constructor
+ * @class
+ * @return {GithubAPI} New GithubAPI.
+ */
 function GithubAPI() {
 	this.hostname = "api.github.com";
 }

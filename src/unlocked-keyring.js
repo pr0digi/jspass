@@ -8,8 +8,15 @@ const openpgp = require("openpgp");
 const inherits = require("inherits");
 
 /**
+ * OpenPGP.js Keyring.
+ * @external Keyring
+ * @see  https://openpgpjs.org/openpgpjs/doc/module-keyring_keyring-Keyring.html
+ */
+
+/**
  * Prototype implementing store for unlocked private keys. Keys are automatically deleted after specified time.
  * @constructs UnlockedKeyring
+ * @extends {external:Keyring}
  * @param  {String|Number} storeTime - Time in seconds for which keys should be stored.
  * @return {UnlockedKeyring} New UnlockedKeyring.
  */

@@ -20,6 +20,7 @@ var convertFiles = require("./util").convertFiles;
  * @param {Boolean} [storeKeys=true] - Store keys in the LocalStore.
  * @param {String|Number} [unlockedKeyStoreTime=600] - Time for which decrypted private keys should be cahed. Defaults to 10 minutes.
  * @param {String} [name=jspass-] - Name for saving in the LocalStore and IndexedDB.
+ * @return {JSPass} JSPass password store.
  */
 function JSPass(unlockedKeyStoreTime = 600, storeKeys = true, name = "jspass-") {
 	this.name = name;

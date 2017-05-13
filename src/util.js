@@ -2,6 +2,7 @@
 
 /**
  * Util module
+ * @module  util
  */
 
 
