@@ -41,7 +41,7 @@ if (typeof window == 'undefined') {
 		});
 	}
 }
-else {
+else if (typeof window != "undefined") {
 	GithubAPI.prototype.makeRequest = function(options, data) {
 		return new Promise((resolve, reject) => {
 			const request = new XMLHttpRequest();
@@ -68,6 +68,7 @@ else {
 		});
 	}
 }
+else { throw new Error("Unsupported platform."); }
 
 
 /**

@@ -11,6 +11,8 @@ var GithubAPI = require('./git/github-api');
 var Password = require('./password');
 var convertFiles = require("./util").convertFiles;
 
+require('es6-promise/auto');
+
 /**
  * Password store inspired by standard UNIX password manager pass.
  * Generated git repositories and archives can be reused with bash utitlity pass.
@@ -28,7 +30,7 @@ function JSPass(unlockedKeyStoreTime = 600, storeKeys = true, name = "jspass-") 
 	this.keyring = new openpgp.Keyring(localStore);
 
 	this.root = new Directory("root", this);
-	this.unlockedKeyring = new UnlockedKeyring();
+	this.unlockedKeyring = new UnlockedKeyring(unlockedKeyStoreTime);
 	this.storeKeys = storeKeys;
 
 	//override OpenPGP.js methods for email check to also accept substring of user id
