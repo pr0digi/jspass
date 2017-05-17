@@ -15,7 +15,7 @@
 function keysEqual(keys1, keys2) {
 	if (keys1.length != keys2.length) return false;
 
-	for (let i=0; i<keys1.length; i++) {
+	for (var i=0; i<keys1.length; i++) {
 		if (keys1[i] != keys2[i]) return false;
 	}
 
@@ -29,17 +29,17 @@ function keysEqual(keys1, keys2) {
  * @return {Array<Object>} Array of converted files.
  */
 function convertFiles(files) {
-  for (let file of files) {
+  for (var file of files) {
     if (file.path.endsWith('.gpg')) {
       if (typeof window == 'undefined') {
-        let buffer = Buffer(file.content, 'base64');
+        var buffer = Buffer(file.content, 'base64');
 
         file.content = new Uint8Array(buffer);
       }
       else {
-        let buffer = atob(file.content);
+        var buffer = atob(file.content);
         file.content = new Uint8Array(buffer.length);
-        for (let i=0; i<buffer.length; i++) {
+        for (var i=0; i<buffer.length; i++) {
           file.content[i] = buffer.charCodeAt(i);
         }
       }
@@ -56,4 +56,19 @@ function convertFiles(files) {
   return files;
 }
 
-module.exports = {keysEqual, convertFiles};
+function mergeTrees(currentTree, newTree) {
+  if (currentTree.sha == newTree.sha) return;
+  for (var file of newTree.tree) {
+    let index = currentTree.tree.findIndex((item) => { return file.path == item.path });
+    if (file.modified) {
+      if (index) currentTree.tree.splice(index, 1);
+    }
+    else if (index == -1) {
+      file.modified = true;
+      file.action = "delete";
+    }
+    else file.sha = currentTree.tree[index].sha;
+  }
+}
+
+module.exports = {keysEqual, convertFiles, mergeTrees};

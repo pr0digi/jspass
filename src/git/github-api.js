@@ -4,6 +4,10 @@
  * GithubAPI module
  */
 
+
+var mergeTrees = require("../util").mergeTrees;
+
+
 /**
  * Prototype representing API to save and retrieve files from github.
  * @constructor
@@ -84,7 +88,7 @@ else { throw new Error("Unsupported platform."); }
  * @param {String} password Github password.
  * @return {Promise<String>} New github auhtorization token.
  */
-GithubAPI.prototype.createAuthorizationToken = function(options, username, password) {
+GithubAPI.prototype.createAuthToken = function(options, username, password) {
 	const requestOptions = {
 		path: '/authorizations',
 		method: 'POST',
@@ -136,13 +140,13 @@ GithubAPI.prototype.getLastCommitAndTree = function() {
 		this.makeRequest(options).then((response) => {
 			options.path = response.object.url;
 			this.makeRequest(options).then((response) => {
-				const lastCommit = response;
+				var lastCommit = response;
 				options.path = response.tree.url + '?recursive=1';
 				this.makeRequest(options).then((response) => {
-					this.lastCommit = lastCommit;
-					this.currentTree = response;
+					//this.lastCommit = lastCommit;
+					//this.currentTree = response;
 					if (response.truncated) reject(new Error("Tree is truncated."));
-					resolve();
+					resolve({commit: lastCommit, tree: response});
 				}).catch((err) => reject(err));
 			}).catch((err) => reject(err));
 		}).catch((err) => reject(err));
@@ -190,7 +194,9 @@ GithubAPI.prototype.createFile = function(path, content) {
 	let file = {
 		path: path,
 		mode: '100644',
-		type: 'blob'
+		type: 'blob',
+		modified: true,
+		action: "create"
 	}
 
 	if (path.endsWith(".gpg")) {
@@ -210,11 +216,10 @@ GithubAPI.prototype.createFile = function(path, content) {
  * @param  {String} path Path of the file.
  */
 GithubAPI.prototype.deleteFile = function(path) {
-	let index = this.getFileIndex(path);
+	let file = this.getFileByPath(path);
 
-	if (typeof index == "undefined") throw new Error("File with specified path doesn't exist.");
-
-	this.currentTree.tree.splice(index, 1);
+	file.modified = true;
+	file.action = "delete";
 }
 
 
@@ -228,13 +233,15 @@ GithubAPI.prototype.changeContent = function(path, content) {
 	let file = this.getFileByPath(path);
 
 	if ('sha' in file) delete file.sha;
-	if (typeof window == "undefined") {
-		if (path.endsWith(".gpg")) {
-			file.content = Buffer(content).toString("base64");
-			file.encoding = "base64";
-		}
-		else file.content = content;
+	if (path.endsWith(".gpg")) {
+		if (typeof window == "undefined") file.content = Buffer(content).toString("base64");
+		else file.content = btoa(String.fromCharCode.apply(null, content));
+		file.encoding = "base64";
 	}
+	else file.content = content;
+
+	file.modified = true;
+	file.action = "changeContent";
 }
 
 
@@ -248,7 +255,10 @@ GithubAPI.prototype.renameFile = function(path, newName) {
 	let file = this.getFileByPath(path);
 	path = path.split('/');
 	path[path.length-1] = newName;
-	file.path = path.join('/');
+	file.newPath = path.join('/');
+
+	file.modified = true;
+	file.action = "move";
 }
 
 
@@ -260,7 +270,10 @@ GithubAPI.prototype.renameFile = function(path, newName) {
  */
 GithubAPI.prototype.moveFile = function(currentPath, newPath) {
 	let file = this.getFileByPath(currentPath);
-	file.path = newPath;
+	file.newPath = newPath;
+
+	file.modified = true;
+	file.action = "move";
 }
 
 
@@ -276,7 +289,9 @@ GithubAPI.prototype.copyFile = function(filePath, copyPath) {
 		path: copyPath,
 		mode: file.mode,
 		type: file.type,
-		sha: file.sha
+		sha: file.sha,
+		modified: true,
+		action: "create"
 	});
 }
 
@@ -360,35 +375,41 @@ GithubAPI.prototype.createTree = function() {
 GithubAPI.prototype.commit = function(message) {
 	return new Promise((resolve, reject) => {
 		if (!this.currentTree || !this.lastCommit) reject(new Error("Last tree or commit unavailable."));
-		this.cleanTree();
-		this.createTree().then( () => {
-			let options = {
-				path: '/repos/' + this.username + '/' + this.repoName + '/git/commits',
-				method: 'POST'
-			};
 
-			let data = {
-				message: message,
-				tree: this.currentTree.sha,
-				parents: [this.lastCommit.sha]
-			}
+		this.getLastCommitAndTree().then((response) => {
 
-			this.makeRequest(options, data).then((response) => {
-				let lastCommit = response;
+			mergeTrees(response.tree, this.currentTree);
 
-				options = {
-					path: '/repos/' + this.username + '/' + this.repoName + '/git/refs/heads/master',
-					method: "PATCH"
+			this.cleanTree();
+			this.createTree().then( () => {
+				let options = {
+					path: '/repos/' + this.username + '/' + this.repoName + '/git/commits',
+					method: 'POST'
+				};
+
+				let data = {
+					message: message,
+					tree: this.currentTree.sha,
+					parents: [response.commit.sha]
 				}
 
-				data = { sha: lastCommit.sha }
-
 				this.makeRequest(options, data).then((response) => {
-					this.lastCommit = lastCommit;
-					resolve();
+					let lastCommit = response;
+
+					options = {
+						path: '/repos/' + this.username + '/' + this.repoName + '/git/refs/heads/master',
+						method: "PATCH"
+					}
+
+					data = { sha: lastCommit.sha }
+
+					this.makeRequest(options, data).then((response) => {
+						this.lastCommit = lastCommit;
+						resolve();
+					}).catch((err) => reject(err));
 				}).catch((err) => reject(err));
 			}).catch((err) => reject(err));
-		}).catch((err) => reject(err));
+		})
 	});
 }
 
@@ -400,7 +421,9 @@ GithubAPI.prototype.commit = function(message) {
  */
 GithubAPI.prototype.clone = function() {
 	return new Promise((resolve, reject) => {
-		this.getLastCommitAndTree().then(() => {
+		this.getLastCommitAndTree().then((response) => {
+			this.lastCommit = response.commit;
+			this.currentTree = response.tree;
 			if (!this.currentTree) reject(new Error('No tree available.'));
 			this.cleanTree();
 			let promises = [];
@@ -451,7 +474,21 @@ GithubAPI.prototype.getFileContent = function(sha) {
  * @method  GithubAPI#cleanTree
  */
 GithubAPI.prototype.cleanTree = function() {
+  this.currentTree.tree = this.currentTree.tree.filter((item) => { return item.action != "delete" });
+
 	for (let item of this.currentTree.tree) {
+    if (item.modified) {
+      if (item.action == "create") {
+        delete item.modified;
+        delete item.action;
+      }
+      else if (item.action == "move") {
+        item.path = item.newpath;
+        delete item.newPath;
+        delete item.modified;
+        delete item.action;
+      }
+    }
 		if ('size' in item) delete item.size;
 		delete item.url;
 	}

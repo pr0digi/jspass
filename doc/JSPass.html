@@ -241,7 +241,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line25">line 25</a>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line27">line 27</a>
     </li></ul></dd>
     
 
@@ -412,7 +412,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line142">line 142</a>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line144">line 144</a>
     </li></ul></dd>
     
 
@@ -655,7 +655,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line501">line 501</a>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line530">line 530</a>
     </li></ul></dd>
     
 
@@ -784,7 +784,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line215">line 215</a>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line244">line 244</a>
     </li></ul></dd>
     
 
@@ -960,7 +960,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line172">line 172</a>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line201">line 201</a>
     </li></ul></dd>
     
 
@@ -1076,7 +1076,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line323">line 323</a>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line352">line 352</a>
     </li></ul></dd>
     
 
@@ -1115,6 +1115,251 @@
     <dd>
         
 <span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="generateKey"><span class="type-signature"></span>generateKey<span class="signature">(userIds, passphrase, numBits)</span><span class="type-signature"> &rarr; {Promise.&lt;<a href="global.html#Key">Key</a>>}</span></h4>
+
+    
+
+
+
+<div class="description">
+    Generate new key pair
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>userIds</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;Id></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Array of ids for new key.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>Id.name</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Name</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>Id.email</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">E-mail.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>passphrase</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Password for new key.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>numBits</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Number of bits for the key.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line180">line 180</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    Public and private key in armored ASCII form.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;<a href="global.html#Key">Key</a>></span>
 
 
     </dd>
@@ -1229,7 +1474,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line372">line 372</a>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line401">line 401</a>
     </li></ul></dd>
     
 
@@ -1345,7 +1590,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line195">line 195</a>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line224">line 224</a>
     </li></ul></dd>
     
 
@@ -1498,7 +1743,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line390">line 390</a>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line419">line 419</a>
     </li></ul></dd>
     
 
@@ -1666,7 +1911,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line440">line 440</a>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line469">line 469</a>
     </li></ul></dd>
     
 
@@ -1831,7 +2076,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line355">line 355</a>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line384">line 384</a>
     </li></ul></dd>
     
 
@@ -1947,7 +2192,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line469">line 469</a>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line498">line 498</a>
     </li></ul></dd>
     
 
@@ -2103,7 +2348,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line151">line 151</a>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line153">line 153</a>
     </li></ul></dd>
     
 
@@ -2151,160 +2396,6 @@
 </dl>
 
     
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="initGit"><span class="type-signature"></span>initGit<span class="signature">(repoUrl, userAgent)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-<div class="description">
-    Initialize git. This method must be called first before other git operations.
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>repoUrl</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">String</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">Repository URL.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>userAgent</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">String</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">User agent for calls to the github API.</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line65">line 65</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -2459,7 +2550,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line339">line 339</a>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line368">line 368</a>
     </li></ul></dd>
     
 
@@ -2585,7 +2676,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line282">line 282</a>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line311">line 311</a>
     </li></ul></dd>
     
 
@@ -2828,7 +2919,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line477">line 477</a>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line506">line 506</a>
     </li></ul></dd>
     
 
@@ -2954,7 +3045,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line100">line 100</a>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line102">line 102</a>
     </li></ul></dd>
     
 
@@ -3107,7 +3198,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line415">line 415</a>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line444">line 444</a>
     </li></ul></dd>
     
 
@@ -3253,7 +3344,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line203">line 203</a>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line232">line 232</a>
     </li></ul></dd>
     
 
@@ -3330,6 +3421,160 @@
 </dl>
 
     
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="setRepository"><span class="type-signature"></span>setRepository<span class="signature">(repoUrl, userAgent)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    Initialize git. This method must be called first before other git operations.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>repoUrl</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Repository URL.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>userAgent</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">User agent for calls to the github API.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line67">line 67</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3438,7 +3683,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line90">line 90</a>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line92">line 92</a>
     </li></ul></dd>
     
 
@@ -3520,7 +3765,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line258">line 258</a>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line287">line 287</a>
     </li></ul></dd>
     
 
@@ -3584,13 +3829,13 @@
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-util.html">util</a></li></ul><h3>Externals</h3><ul><li><a href="external-Keyring.html">Keyring</a></li></ul><h3>Classes</h3><ul><li><a href="Directory.html">Directory</a></li><li><a href="GithubAPI.html">GithubAPI</a></li><li><a href="JSPass.html">JSPass</a></li><li><a href="Password.html">Password</a></li><li><a href="UnlockedKeyring.html">UnlockedKeyring</a></li></ul><h3>Global</h3><ul><li><a href="global.html#openpgp">openpgp</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-util.html">util</a></li></ul><h3>Externals</h3><ul><li><a href="external-Keyring.html">Keyring</a></li></ul><h3>Classes</h3><ul><li><a href="Directory.html">Directory</a></li><li><a href="GithubAPI.html">GithubAPI</a></li><li><a href="JSPass.html">JSPass</a></li><li><a href="Password.html">Password</a></li><li><a href="UnlockedKeyring.html">UnlockedKeyring</a></li></ul><h3>Global</h3><ul><li><a href="global.html#mergeTrees">mergeTrees</a></li><li><a href="global.html#openpgp">openpgp</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Sat May 13 2017 12:47:24 GMT+0200 (Central Europe Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Tue May 16 2017 18:04:57 GMT+0200 (Central Europe Daylight Time)
 </footer>
 
 <script> prettyPrint(); </script>

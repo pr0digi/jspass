@@ -25,56 +25,56 @@ require('es6-promise/auto');
  * @return {JSPass} JSPass password store.
  */
 function JSPass(unlockedKeyStoreTime = 600, storeKeys = true, name = "jspass-") {
-	this.name = name;
-	let localStore = new openpgp.Keyring.localstore(name);
-	this.keyring = new openpgp.Keyring(localStore);
+  this.name = name;
+  var localStore = new openpgp.Keyring.localstore(name);
+  this.keyring = new openpgp.Keyring(localStore);
 
-	this.root = new Directory("root", this);
-	this.unlockedKeyring = new UnlockedKeyring(unlockedKeyStoreTime);
-	this.storeKeys = storeKeys;
+  this.root = new Directory("root", this);
+  this.unlockedKeyring = new UnlockedKeyring(unlockedKeyStoreTime);
+  this.storeKeys = storeKeys;
 
-	//override OpenPGP.js methods for email check to also accept substring of user id
-	function getForAddress(email) {
-	  var results = [];
-	  for (var i = 0; i < this.keys.length; i++) {
-	    if (emailCheck(email, this.keys[i])) {
-	      results.push(this.keys[i]);
-	    }
-	  }
-	  return results;
-	};
+  //override OpenPGP.js methods for email check to also accept substring of user id
+  function getForAddress(email) {
+    var results = [];
+    for (var i = 0; i < this.keys.length; i++) {
+      if (emailCheck(email, this.keys[i])) {
+        results.push(this.keys[i]);
+      }
+    }
+    return results;
+  };
 
-	function emailCheck(email, key) {
-	  email = email.toLowerCase();
-	  // escape email before using in regular expression
-	  var emailEsc = email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-	  var emailRegex = new RegExp(emailEsc);
-	  var userIds = key.getUserIds();
-	  for (var i = 0; i < userIds.length; i++) {
-	    var userId = userIds[i].toLowerCase();
-	    if (email === userId || emailRegex.exec(userId)) {
-	      return true;
-	    }
-	  }
-	  return false;
-	}
+  function emailCheck(email, key) {
+    email = email.toLowerCase();
+    // escape email before using in regular expression
+    var emailEsc = email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    var emailRegex = new RegExp(emailEsc);
+    var userIds = key.getUserIds();
+    for (var i = 0; i < userIds.length; i++) {
+      var userId = userIds[i].toLowerCase();
+      if (email === userId || emailRegex.exec(userId)) {
+        return true;
+      }
+    }
+    return false;
+  }
 
-	this.keyring.publicKeys.getForAddress = getForAddress;
-	this.keyring.privateKeys.getForAddress = getForAddress;
+  this.keyring.publicKeys.getForAddress = getForAddress;
+  this.keyring.privateKeys.getForAddress = getForAddress;
 }
 
 
 /**
  * Initialize git. This method must be called first before other git operations.
- * @method  JSPass#initGit
+ * @method  JSPass#setRepository
  * @param  {String} repoUrl   Repository URL.
  * @param  {String} userAgent User agent for calls to the github API.
  */
-JSPass.prototype.initGit = function(repoUrl, userAgent="jspass") {
-	if (repoUrl.match("github.com")) this.git = new GithubAPI();
-	else throw new Error("Unsupported git service.");
+JSPass.prototype.setRepository = function(repoUrl, userAgent="jspass") {
+  if (repoUrl.match("github.com")) this.git = new GithubAPI();
+  else throw new Error("Unsupported git service.");
 
-	this.git.setRepository(repoUrl, userAgent);
+  this.git.setRepository(repoUrl, userAgent);
 }
 
 
@@ -85,7 +85,7 @@ JSPass.prototype.initGit = function(repoUrl, userAgent="jspass") {
  * @return {Array<Password>|null} Array with macthed password or null if no password has been found.
  */
 JSPass.prototype.search = function(pattern, deep = true) {
-	return this.root.search(pattern, deep);
+  return this.root.search(pattern, deep);
 }
 
 
@@ -95,7 +95,7 @@ JSPass.prototype.search = function(pattern, deep = true) {
  * @param {Number} time Time, for which private keys should stay decrypted in memory.
  */
 JSPass.prototype.setUnlockedTime = function(time) {
-	this.unlockedKeyring.unlockedKeyStoreTime = time;
+  this.unlockedKeyring.unlockedKeyStoreTime = time;
 }
 
 
@@ -105,39 +105,39 @@ JSPass.prototype.setUnlockedTime = function(time) {
  * @return {Promise} If succesfully resolved, password store is populated with passwords from repository.
  */
 JSPass.prototype.pullGit = function() {
-	return new Promise((resolve, reject) => {
-		this.git.clone().then((files) => {
-			files = convertFiles(files);
-			let passwordPromises = new Array();
-			for (let file of files) {
-				if (file.path.endsWith(".gitattributes")) continue;
+  return new Promise((resolve, reject) => {
+    this.git.clone().then((files) => {
+      files = convertFiles(files);
+      var passwordPromises = new Array();
+      for (let file of files) {
+        if (file.path.endsWith(".gitattributes")) continue;
 
-				file.path = file.path.split("/");
-				let filename = file.path.pop();
+        file.path = file.path.split("/");
+        var filename = file.path.pop();
 
-				let directoryPath = file.path.join('/');
-				if (directoryPath) directoryPath += "/";
+        var directoryPath = file.path.join('/');
+        if (directoryPath) directoryPath += "/";
 
-				let parent;
-				if (directoryPath == "") parent = this.root;
-				else parent = this.root.addDirectoryRecursive(directoryPath);
+        var parent;
+        if (directoryPath == "") parent = this.root;
+        else parent = this.root.addDirectoryRecursive(directoryPath);
 
-				if (filename.endsWith(".gpg")) {
-					//remove .gpg extension
-					filename = filename.substring(0, filename.length - 4);
-					passwordPromises.push(new Password(parent, filename, file.content));
-				}
-				else if (filename.endsWith('.gpg-id')) {
-					parent.ids = file.content.trim().split(" ");
-				}
-			}
+        if (filename.endsWith(".gpg")) {
+          //remove .gpg extension
+          filename = filename.substring(0, filename.length - 4);
+          passwordPromises.push(new Password(parent, filename, file.content));
+        }
+        else if (filename.endsWith('.gpg-id')) {
+          parent.ids = file.content.trim().split(" ");
+        }
+      }
 
-			Promise.all(passwordPromises).then((passwords) => {
-				for (let password of passwords) password.parent.passwords.push(password);
-				resolve();
-			});
-		}).catch((err) => reject(err));
-	});
+      Promise.all(passwordPromises).then((passwords) => {
+        for (let password of passwords) password.parent.passwords.push(password);
+        resolve();
+      });
+    }).catch((err) => reject(err));
+  });
 }
 
 
@@ -157,17 +157,44 @@ JSPass.prototype.commit = function(message) { return this.git.commit(message); }
  * @returns {null|Array<Error>} Null if key was imported, error otherwise.
  */
 JSPass.prototype.importKey = function(armoredKey) {
-	let key = openpgp.key.readArmored(armoredKey);
-	if (key.err) return key.err;
+  var key = openpgp.key.readArmored(armoredKey);
+  if (key.err) return key.err;
 
-	if (key.keys[0].isPublic()) {
-		for (let keyItem of key.keys) this.keyring.publicKeys.push(keyItem);
-	}
-	else for (let keyItem of key.keys) this.keyring.privateKeys.push(keyItem);
+  if (key.keys[0].isPublic()) {
+    for (let keyItem of key.keys) this.keyring.publicKeys.push(keyItem);
+  }
+  else for (let keyItem of key.keys) this.keyring.privateKeys.push(keyItem);
 
-	if (this.storeKeys) this.keyring.store();
+  if (this.storeKeys) this.keyring.store();
 
-	return null;
+  return null;
+}
+
+/**
+ * Object with newly generated key.
+ * @typedef {Object} Key
+ * @property {String} privateKeyArmored Public key.
+ * @property {String} publicKeyArmored Private key.
+ */
+
+/**
+ * Generate new key pair
+ * @method  JSPass#generateKey
+ * @param  {Array<Id>} userIds    Array of ids for new key.
+ * @param {String} Id.name Name
+ * @param {String} Id.email E-mail.
+ * @param  {String} passphrase Password for new key.
+ * @param  {Number} numBits    Number of bits for the key.
+ * @return {Promise<Key>}   Public and private key in armored ASCII form.
+ */
+JSPass.prototype.generateKey = function(userIds, passphrase, numBits) {
+  var options = {
+    userIds: userIds,
+    numBits: numBits,
+    passphrase: passphrase
+  };
+
+  return openpgp.generateKey(options);
 }
 
 
@@ -181,16 +208,16 @@ JSPass.prototype.importKey = function(armoredKey) {
  * @returns {Boolean} True if key was decrypted, false otherwise.
  */
 JSPass.prototype.decryptKey = function(id, password) {
-	let key = this.keyring.privateKeys.getForId(id);
-	if (key == null) throw new Error("ID isn't in keyring.");
-	let armored = key.armor();
+  var key = this.keyring.privateKeys.getForId(id);
+  if (key == null) throw new Error("ID isn't in keyring.");
+  var armored = key.armor();
 
-	let keyCopy = openpgp.key.readArmored(armored).keys[0];
-	if (keyCopy.decrypt(password)) {
-		this.unlockedKeyring.privateKeys.push(keyCopy);
-		return true;
-	}
-	else return false;
+  var keyCopy = openpgp.key.readArmored(armored).keys[0];
+  if (keyCopy.decrypt(password)) {
+    this.unlockedKeyring.privateKeys.push(keyCopy);
+    return true;
+  }
+  else return false;
 }
 
 
@@ -211,7 +238,7 @@ JSPass.prototype.getKeyIds = function() { return this.root.getKeyIds(); }
  * @throws If no private key for containing password is decrypted in unlocked keyring.
  * @return {Promise<Directory>} Promise of directory with all passwords reencrypted to new ids.
  */
-JSPass.prototype.setKeyIds = function(keyIds) { return this.root.setKeyIds(keyIds);	}
+JSPass.prototype.setKeyIds = function(keyIds) { return this.root.setKeyIds(keyIds); }
 
 
 /**
@@ -220,40 +247,40 @@ JSPass.prototype.setKeyIds = function(keyIds) { return this.root.setKeyIds(keyId
  * @return {Promise} If succesfully resolved, database was succesfuly opened or created.
  */
 JSPass.prototype.createDB = function() {
-	if (typeof window == "undefined") throw new Error("Databse is supported only in browser.");
-	let dbPromise = new Promise((resolve, reject) => {
-		let request = window.indexedDB.open(this.name, 1);
+  if (typeof window == "undefined") throw new Error("Databse is supported only in browser.");
+  var dbPromise = new Promise((resolve, reject) => {
+    var request = window.indexedDB.open(this.name, 1);
 
-		request.onerror = function(event) {
-			reject(new Error("Creating databse failed, error code: " + request.errorCode));
-		}
+    request.onerror = function(event) {
+      reject(new Error("Creating databse failed, error code: " + request.errorCode));
+    }
 
-		request.onupgradeneeded = function(event) {
-			let db = event.target.result;
+    request.onupgradeneeded = function(event) {
+      var db = event.target.result;
 
-			let directories = db.createObjectStore("directories", {autoIncrement: true});
-			directories.createIndex("parentPath", "parentPath", { unique: false });
-			directories.createIndex("name", "name", { unique: false });
-			directories.createIndex("ids", "ids", { unique: false });
+      var directories = db.createObjectStore("directories", {autoIncrement: true});
+      directories.createIndex("parentPath", "parentPath", { unique: false });
+      directories.createIndex("name", "name", { unique: false });
+      directories.createIndex("ids", "ids", { unique: false });
 
-			let passwords = db.createObjectStore("passwords", {autoIncrement: true});
-			passwords.createIndex("parentPath", "parentPath", { unique: false });
-			passwords.createIndex("name", "name", { unique: false });
-			passwords.createIndex("content", "content", { unique: false });
-		}
+      var passwords = db.createObjectStore("passwords", {autoIncrement: true});
+      passwords.createIndex("parentPath", "parentPath", { unique: false });
+      passwords.createIndex("name", "name", { unique: false });
+      passwords.createIndex("content", "content", { unique: false });
+    }
 
-		request.onsuccess = function(event) { resolve(event.target.result) }
-	});
+    request.onsuccess = function(event) { resolve(event.target.result) }
+  });
 
-	return new Promise((resolve, reject) => {
-		dbPromise.then((db) => {
-			this.database = db;
-			this.database.onerror = function(event) {
-				throw new Error("Databse error, error code: " + event.target.errorCode);
-			}
-			resolve();
-		}).catch((err) => reject(err));
-	});
+  return new Promise((resolve, reject) => {
+    dbPromise.then((db) => {
+      this.database = db;
+      this.database.onerror = function(event) {
+        throw new Error("Databse error, error code: " + event.target.errorCode);
+      }
+      resolve();
+    }).catch((err) => reject(err));
+  });
 }
 
 
@@ -263,21 +290,21 @@ JSPass.prototype.createDB = function() {
  * @return {Promise} If resolved, password store was succesfully saved to IndexedDB.
  */
 JSPass.prototype.storeToDB = function() {
-	return new Promise((resolve, reject) => {
-		let transaction = this.database.transaction(["directories", "passwords"], "readwrite");
+  return new Promise((resolve, reject) => {
+    var transaction = this.database.transaction(["directories", "passwords"], "readwrite");
 
-		transaction.oncomplete = function(event) {
-			resolve();
-		}
+    transaction.oncomplete = function(event) {
+      resolve();
+    }
 
-		transaction.onerror = function(event) {
-			reject(new Error("Error while saving passwords to the to database."));
-		}
+    transaction.onerror = function(event) {
+      reject(new Error("Error while saving passwords to the to database."));
+    }
 
-		let directories = transaction.objectStore("directories");
-		let passwords = transaction.objectStore("passwords");
-		this.root.storeToDB(directories, passwords).then(() => resolve()).catch((err) => reject(err));
-	});
+    var directories = transaction.objectStore("directories");
+    var passwords = transaction.objectStore("passwords");
+    this.root.storeToDB(directories, passwords).then(() => resolve()).catch((err) => reject(err));
+  });
 }
 
 
@@ -287,38 +314,38 @@ JSPass.prototype.storeToDB = function() {
  * @return {Promise} If resolved, passwords were succesfully loaded into store.
  */
 JSPass.prototype.loadFromDB = function() {
-	return new Promise((resolve, reject) => {
-		let transaction = this.database.transaction(["directories", "passwords"]);
+  return new Promise((resolve, reject) => {
+    var transaction = this.database.transaction(["directories", "passwords"]);
 
-		let directories = new Array();
-		let directoriesStore = transaction.objectStore("directories");
-		directoriesStore.openCursor().onsuccess = function(event) {
-			let cursor = event.target.result;
-			if (cursor) {
-				directories.push(cursor.value);
-				cursor.continue();
-			}
-		}
+    var directories = new Array();
+    var directoriesStore = transaction.objectStore("directories");
+    directoriesStore.openCursor().onsuccess = function(event) {
+      var cursor = event.target.result;
+      if (cursor) {
+        directories.push(cursor.value);
+        cursor.continue();
+      }
+    }
 
-		let passwords = new Array();
-		let passwordsStore = transaction.objectStore("passwords");
-		passwordsStore.openCursor().onsuccess = function(event) {
-			let cursor = event.target.result;
-			if (cursor) {
-				passwords.push(cursor.value);
-				cursor.continue();
-			}
-		}
+    var passwords = new Array();
+    var passwordsStore = transaction.objectStore("passwords");
+    passwordsStore.openCursor().onsuccess = function(event) {
+      var cursor = event.target.result;
+      if (cursor) {
+        passwords.push(cursor.value);
+        cursor.continue();
+      }
+    }
 
-		let rootDir = this.root;
-		transaction.oncomplete = function(event) {
-			rootDir.loadFromDB(directories, passwords).then(() => resolve()).catch((err) => reject(err));
-		}
+    var rootDir = this.root;
+    transaction.oncomplete = function(event) {
+      rootDir.loadFromDB(directories, passwords).then(() => resolve()).catch((err) => reject(err));
+    }
 
-		transaction.onerror = function(event) {
-			reject(new Error("Cannot load directories and passwords from database."));
-		}
-	});
+    transaction.onerror = function(event) {
+      reject(new Error("Cannot load directories and passwords from database."));
+    }
+  });
 }
 
 
@@ -328,13 +355,13 @@ JSPass.prototype.loadFromDB = function() {
  * @return {Promise} If resolved, IndexedDB was removed.
  */
 JSPass.prototype.deleteDB = function() {
-	return new Promise((resolve, reject) => {
-		let request = window.indexedDB.deleteDatabase(this.name);
+  return new Promise((resolve, reject) => {
+    var request = window.indexedDB.deleteDatabase(this.name);
 
-		request.onsuccess = function(event) { resolve() }
+    request.onsuccess = function(event) { resolve() }
 
-		request.onerror = function(event) { reject(new Error("Cannot delete database.")) }
-	});
+    request.onerror = function(event) { reject(new Error("Cannot delete database.")) }
+  });
 }
 
 
@@ -349,8 +376,8 @@ JSPass.prototype.deleteDB = function() {
  * @returns {Promise<Password>} - Password if store was previously initialized.
  */
 JSPass.prototype.insertPasswordByPath = function(destination, name, content) {
-	let destinationDir = this.root.addDirectoryRecursive(destination.substring(1));
-	return destinationDir.addPassword(name, content);
+  var destinationDir = this.root.addDirectoryRecursive(destination.substring(1));
+  return destinationDir.addPassword(name, content);
 }
 
 
@@ -362,12 +389,12 @@ JSPass.prototype.insertPasswordByPath = function(destination, name, content) {
  * @returns {Password} Password if it exists.
  */
 JSPass.prototype.getPasswordByPath = function(path) {
-	path = path.split("/").slice(1);
-	let currentDir = this.root;
+  path = path.split("/").slice(1);
+  var currentDir = this.root;
 
-	while (path.length > 1) currentDir = currentDir.getDirectory(path.shift());
+  while (path.length > 1) currentDir = currentDir.getDirectory(path.shift());
 
-	return currentDir.getPassword(path.shift());
+  return currentDir.getPassword(path.shift());
 }
 
 
@@ -379,13 +406,13 @@ JSPass.prototype.getPasswordByPath = function(path) {
  * @return {Directory} Directory if it exists.
  */
 JSPass.prototype.getDirectoryByPath = function(path) {
-	path = path.split("/").slice(1);
-	if (path[path.length - 1] == '') path.pop();
+  path = path.split("/").slice(1);
+  if (path[path.length - 1] == '') path.pop();
 
-	let currentDir = this.root;
-	while (path.length) currentDir = currentDir.getDirectory(path.shift());
+  var currentDir = this.root;
+  while (path.length) currentDir = currentDir.getDirectory(path.shift());
 
-	return currentDir;
+  return currentDir;
 }
 
 
@@ -397,20 +424,20 @@ JSPass.prototype.getDirectoryByPath = function(path) {
  * @return {Directory|Password} Password or directory with specified path.
  */
 JSPass.prototype.getItemByPath = function(path) {
-	let item;
-	if (!path.endsWith("/")) {
-		try {	item = this.getPasswordByPath(path); }
-		catch (err) {}
-	}
+  var item;
+  if (!path.endsWith("/")) {
+    try { item = this.getPasswordByPath(path); }
+    catch (err) {}
+  }
 
-	if (!item) {
-		try { item = this.getDirectoryByPath(path) }
-		catch(err) {}
-	}
+  if (!item) {
+    try { item = this.getDirectoryByPath(path) }
+    catch(err) {}
+  }
 
-	if (!item) throw new Error("Item with specified path doesn't exist.");
+  if (!item) throw new Error("Item with specified path doesn't exist.");
 
-	return item;
+  return item;
 }
 
 
@@ -423,8 +450,8 @@ JSPass.prototype.getItemByPath = function(path) {
  * @param {String} path - Path of the file or folder.
  */
 JSPass.prototype.removeItemByPath = function(path) {
-	let item = this.getItemByPath(path);
-	item.remove();
+  var item = this.getItemByPath(path);
+  item.remove();
 }
 
 
@@ -436,7 +463,7 @@ JSPass.prototype.removeItemByPath = function(path) {
  * @throws If password with same name already exists in direcotry.
  * @return {Promise<Password>} Promise of new password.
  */
-JSPass.prototype.addPassword = function(name, content) { return this.root.addPassword(name, content);	}
+JSPass.prototype.addPassword = function(name, content) { return this.root.addPassword(name, content); }
 
 
 /**
@@ -489,14 +516,14 @@ JSPass.prototype.getRoot = function() { return this.root; }
  * @returns {Promise<Directory|Password>} Promise of moved directory or password reencrypted to the corresponding keys of new location.
  */
 JSPass.prototype.move = function(source, destination, force = false) {
-	let sourceItem = this.getItemByPath(source);
-	let destinationDir = this.root.addDirectoryRecursive(destination.substring(1));
+  var sourceItem = this.getItemByPath(source);
+  var destinationDir = this.root.addDirectoryRecursive(destination.substring(1));
 
-	return new Promise((resolve, reject) => {
-		sourceItem.move(destinationDir, force).then( (item) => {
-			resolve(item);
-		});
-	});
+  return new Promise((resolve, reject) => {
+    sourceItem.move(destinationDir, force).then( (item) => {
+      resolve(item);
+    });
+  });
 }
 
 
@@ -513,14 +540,14 @@ JSPass.prototype.move = function(source, destination, force = false) {
  * @returns {Directory|Password} Reference to the copied firectory or password.
  */
 JSPass.prototype.copy = function(source, destination, force = false) {
-	let sourceItem = this.getItemByPath(source);
-	let destinationDir = this.root.addDirectoryRecursive(destination.substring(1));
+  var sourceItem = this.getItemByPath(source);
+  var destinationDir = this.root.addDirectoryRecursive(destination.substring(1));
 
-	return new Promise((resolve, reject) => {
-		sourceItem.copy(destinationDir, force).then( (item) => {
-			resolve(item);
-		});
-	});
+  return new Promise((resolve, reject) => {
+    sourceItem.copy(destinationDir, force).then( (item) => {
+      resolve(item);
+    });
+  });
 }
 
 module.exports = JSPass;

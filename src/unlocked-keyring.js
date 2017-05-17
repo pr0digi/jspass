@@ -4,8 +4,7 @@
  * CahedKeyring module.
  */
 
-const openpgp = require("openpgp");
-const inherits = require("inherits");
+var openpgp = require("openpgp");
 
 /**
  * OpenPGP.js Keyring.
@@ -79,9 +78,9 @@ function UnlockedKeyring(storeTime) {
 
 
 	/**
-	 * [refreshKeyTimeout description]
-	 * @param  {[type]} key [description]
-	 * @return {[type]}     [description]
+	 * Refresh key removal time.
+   * @method  KeyArray#refreshKeyTimeout
+	 * @param  {module:key~Key} key Key to be refreshed.
 	 */
 	this.privateKeys.refreshKeyTimeout = function(key) {
 		clearTimeout(key.timeoutId);

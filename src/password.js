@@ -45,7 +45,7 @@ Password.prototype.storeToDB = function(passwordsObjectStore) {
 			content: this.content
 		}
 
-		let request = passwordsObjectStore.add(pass);
+		var request = passwordsObjectStore.add(pass);
 
 		request.onsucess = function (event) { resolve() }
 
@@ -66,7 +66,7 @@ Password.prototype.storeToDB = function(passwordsObjectStore) {
 Password.prototype.encrypt = function(content, keys) {
 	if (!keys) keys = this.parent.getKeysFor("public");
 
-	let options = {
+	var options = {
 		data: content,
 		publicKeys: keys,
 		armor: false
@@ -88,7 +88,7 @@ Password.prototype.encrypt = function(content, keys) {
  */
 Password.prototype.decrypt = function() {
 	return new Promise( (resolve, reject) => {
-		let options = {
+		var options = {
 			message: openpgp.message.read(this.content),
 			privateKey: this.parent.getUnlockedPrivateKey(this.getKeyIds())
 		};
@@ -112,9 +112,9 @@ Password.prototype.decrypt = function() {
  * @return {Array<KeyInfo>} Users and fingerprints of all available decryption keys.
  */
 Password.prototype.getAvailableKeysInfo = function() {
-	let result = new Array();
+	var result = new Array();
 	for (let key of this.parent.getKeysFor("private", this.getKeyIds())) {
-		let users = new Array();
+		var users = new Array();
 		for (let user of key.users) users.push(user.userId.userid);
 		result.push({
 			users: users,
@@ -132,7 +132,7 @@ Password.prototype.getAvailableKeysInfo = function() {
  * @return {String} - 16-character key id's for the password.
  */
 Password.prototype.getKeyIds = function() {
-	let keyIds = new Array();
+	var keyIds = new Array();
 	for (let id of openpgp.message.read(this.content).getEncryptionKeyIds()) {
 		keyIds.push(id.toHex());
 	}
@@ -151,8 +151,8 @@ Password.prototype.reencryptTo = function(newKeys) {
 		this.decrypt().then( (content) => {
 			this.encrypt(content, newKeys).then( () => {
 				try {
-					let git = this.getGit();
-					let path = this.getPath().substr(1) + ".gpg";
+					var git = this.getGit();
+					var path = this.getPath().substr(1) + ".gpg";
 					git.changeContent(path, this.content);
 				}
 				catch (err) { reject(err); }
@@ -178,32 +178,32 @@ Password.prototype.copy = function(destination, force = false) {
 		if (!force) destination.passwordNameCheck(this.name);
 
 		try {
-			let password = destination.getPassword(this.name);
+			var password = destination.getPassword(this.name);
 			password.remove();
 		}
 		catch (err) {}
 
-		let oldKeysIds = this.parent.getKeyIds();
-		let newKeysIds = destination.getKeyIds();
+		var oldKeysIds = this.parent.getKeyIds();
+		var newKeysIds = destination.getKeyIds();
 
 		new Password(destination, this.name, this.content).then((passwordCopy) => {
 			destination.passwords.push(passwordCopy);
-			let path = passwordCopy.getPath().substr(1) + ".gpg";
+			var path = passwordCopy.getPath().substr(1) + ".gpg";
 
 			if (util.keysEqual(oldKeysIds, newKeysIds)) {
 				try {
-					let git = this.getGit();
+					var git = this.getGit();
 					git.createFile(path, passwordCopy.content);
 				}
 				catch (err) { }
 				resolve(this);
 			}
 
-			let newKeys = this.parent.getKeysFor("public", newKeysIds);
+			var newKeys = this.parent.getKeysFor("public", newKeysIds);
 
 			passwordCopy.reencryptTo(newKeys).then((pass) => {
 				try {
-					let git = this.getGit();
+					var git = this.getGit();
 					git.createFile(path, pass.content);
 				}
 				catch (err) { }
@@ -227,15 +227,15 @@ Password.prototype.move = function(destination, force = false) {
 		if (!force) destination.passwordNameCheck(this.name);
 
 		try {
-			let password = destination.getPassword(this.name);
+			var password = destination.getPassword(this.name);
 			password.remove();
 		}
 		catch (err) {}
 
-		let oldKeysIds = this.parent.getKeyIds();
-		let newKeysIds = destination.getKeyIds();
+		var oldKeysIds = this.parent.getKeyIds();
+		var newKeysIds = destination.getKeyIds();
 
-		let oldPath = this.getPath().substr(1) + ".gpg";
+		var oldPath = this.getPath().substr(1) + ".gpg";
 
 		this.parent.removePassword(this.name);
 		destination.passwords.push(this);
@@ -243,20 +243,20 @@ Password.prototype.move = function(destination, force = false) {
 
 		if (util.keysEqual(oldKeysIds, newKeysIds)) {
 			try {
-				let git = this.getGit();
-				let newPath = this.getPath().substr(1) + ".gpg";
+				var git = this.getGit();
+				var newPath = this.getPath().substr(1) + ".gpg";
 				git.moveFile(oldPath, newPath);
 			}
 			catch (err) { }
 			resolve(this);
 		}
 
-		let newKeys = this.parent.getKeysFor("public", newKeysIds);
+		var newKeys = this.parent.getKeysFor("public", newKeysIds);
 
 		this.reencryptTo(newKeys).then( (pass) => {
 			try {
-				let git = this.getGit();
-				let newPath = this.getPath().substr(1) + ".gpg";
+				var git = this.getGit();
+				var newPath = this.getPath().substr(1) + ".gpg";
 				git.moveFile(oldPath, newPath);
 			}
 			catch (err) { }
@@ -275,8 +275,8 @@ Password.prototype.move = function(destination, force = false) {
  */
 Password.prototype.rename = function(name) {
 	try {
-		let git = this.getGit();
-		let path = this.getPath().substr(1) + ".gpg";
+		var git = this.getGit();
+		var path = this.getPath().substr(1) + ".gpg";
 		git.renameFile(path, name + ".gpg");
 	}
 	catch (err) { }
@@ -293,8 +293,8 @@ Password.prototype.rename = function(name) {
  */
 Password.prototype.remove = function() {
 	try {
-		let git = this.getGit();
-		let path = this.getPath().substr(1) + ".gpg";
+		var git = this.getGit();
+		var path = this.getPath().substr(1) + ".gpg";
 		git.deleteFile(path);
 	}
 	catch (err) { }
@@ -322,11 +322,11 @@ Password.prototype.getContent = function() { return this.decrypt(); }
  */
 Password.prototype.setContent = function(content) {
 	return new Promise((resolve, reject) => {
-		let keys = this.parent.getKeysFor("public", this.getKeyIds());
+		var keys = this.parent.getKeysFor("public", this.getKeyIds());
 		this.encrypt(content, keys).then( (pass) => {
 			try {
-				let git = this.getGit();
-				let path = this.getPath().substring(1) + ".gpg";
+				var git = this.getGit();
+				var path = this.getPath().substring(1) + ".gpg";
 				git.changeContent(path, pass.content);
 			}
 			catch (err) { }
