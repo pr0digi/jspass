@@ -27,5 +27,5 @@ gulp.task("dev-bundle", function() {
     .bundle()
     .pipe(source("jspass.js"))
     .pipe(derequire())
-    .pipe(gulp.dest("./"));
+    .pipe(gulp.dest("./dist/"));
 });
