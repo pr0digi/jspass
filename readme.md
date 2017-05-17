@@ -39,11 +39,13 @@ co(function* () {
   //set key ids for root directory
   yield store.setKeyIds("fingerprint-or-long-key")
   //you can add password directly on JSPass object, which will add password to the root directory
-  yield store.addPassword("example", "exampleContent");
+  yield store.addPassword("example", "example content");
 
   var exampleDir = store.addDirectory("exampleDirectory");
   //you can also add directories recursively
   var anotherDir = exampleDir.addDirectoryRecursive("subDir/anotherDir/");
+
+  yield anotherDir.addPassword("anotherPassword", "secret content");
 });
 ```
 
