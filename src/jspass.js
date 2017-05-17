@@ -101,10 +101,10 @@ JSPass.prototype.setUnlockedTime = function(time) {
 
 /**
  * Pull remote git repository and initialize store with contained passwords.
- * @method  JSPass#pullGit
+ * @method  JSPass#clone
  * @return {Promise} If succesfully resolved, password store is populated with passwords from repository.
  */
-JSPass.prototype.pullGit = function() {
+JSPass.prototype.clone = function() {
   return new Promise((resolve, reject) => {
     this.git.clone().then((files) => {
       files = convertFiles(files);
@@ -483,6 +483,15 @@ JSPass.prototype.getPassword = function(name) { return this.root.getPassword(nam
  * @return {Directory} Newly created directory.
  */
 JSPass.prototype.addDirectory = function(name) { return this.root.addDirectory(name); }
+
+
+/**
+ * Adds new directory recursively.
+ * @method  JSPass#addDirectoryRecursive
+ * @param {String} path Relative path of the new directory.
+ * @return {Directory} Newly created directory.
+ */
+JSPass.prototype.addDirectoryRecursive = function(path) { return this.root.addDirectoryRecursive(path); }
 
 
 /**

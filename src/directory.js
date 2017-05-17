@@ -245,6 +245,7 @@ Directory.prototype.addDirectory = function(name) {
 
 /**
  * Adds new directory recursively.
+ * @method  Directory#addDirectoryRecursive
  * @param {String} path Relative path of the new directory.
  * @return {Directory} Newly created directory.
  */

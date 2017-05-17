@@ -660,7 +660,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line251">line 251</a>
+        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line246">line 246</a>
     </li></ul></dd>
     
 
@@ -699,6 +699,194 @@
     <dd>
         
 <span class="param-type"><a href="Directory.html">Directory</a></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="addPassword"><span class="type-signature"></span>addPassword<span class="signature">(name, content)</span><span class="type-signature"> &rarr; {Promise.&lt;<a href="Password.html">Password</a>>}</span></h4>
+
+    
+
+
+
+<div class="description">
+    Add password to store. Password is automatically encrypted to the corresponding keys of directory.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>name</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Name of the password.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>content</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Content of the password.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line458">line 458</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+
+        
+
+    <div class="param-desc">
+    
+        If password with same name already exists in direcotry.
+    
+    </div>
+
+
+    
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    Promise of new password.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;<a href="Password.html">Password</a>></span>
 
 
     </dd>
@@ -883,194 +1071,6 @@
     </dt>
     <dd></dd>
 </dl>
-
-
-    
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    Promise of new password.
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Promise.&lt;<a href="Password.html">Password</a>></span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="addPassword"><span class="type-signature"></span>addPassword<span class="signature">(name, content)</span><span class="type-signature"> &rarr; {Promise.&lt;<a href="Password.html">Password</a>>}</span></h4>
-
-    
-
-
-
-<div class="description">
-    Add password to store. Password is automatically encrypted to the corresponding keys of directory.
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>name</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">String</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">Name of the password.</td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>content</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">String</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">Content of the password.</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line458">line 458</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-<h5>Throws:</h5>
-
-        
-
-    <div class="param-desc">
-    
-        If password with same name already exists in direcotry.
-    
-    </div>
 
 
     
@@ -1300,7 +1300,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line342">line 342</a>
+        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line343">line 343</a>
     </li></ul></dd>
     
 
@@ -1609,7 +1609,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line288">line 288</a>
+        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line289">line 289</a>
     </li></ul></dd>
     
 
@@ -1773,171 +1773,6 @@
 
 
 <div class="description">
-    Get directory with specified name from root directory.
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>name</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">String</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">Name of the directory to return.</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line488">line 488</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-<h5>Throws:</h5>
-
-        
-
-    <div class="param-desc">
-    
-        If directory with specified name doesn't exist.
-    
-    </div>
-
-
-    
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    Directory with specified name.
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type"><a href="Directory.html">Directory</a></span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="getDirectory"><span class="type-signature"></span>getDirectory<span class="signature">(name)</span><span class="type-signature"> &rarr; {<a href="Directory.html">Directory</a>}</span></h4>
-
-    
-
-
-
-<div class="description">
     Get directory with specified name.
 </div>
 
@@ -2031,7 +1866,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line273">line 273</a>
+        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line274">line 274</a>
     </li></ul></dd>
     
 
@@ -2078,6 +1913,171 @@
     </dt>
     <dd></dd>
 </dl>
+
+
+    
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    Directory with specified name.
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Directory.html">Directory</a></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="getDirectory"><span class="type-signature"></span>getDirectory<span class="signature">(name)</span><span class="type-signature"> &rarr; {<a href="Directory.html">Directory</a>}</span></h4>
+
+    
+
+
+
+<div class="description">
+    Get directory with specified name from root directory.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>name</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Name of the directory to return.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="jspass.js.html">jspass.js</a>, <a href="jspass.js.html#line497">line 497</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+<h5>Throws:</h5>
+
+        
+
+    <div class="param-desc">
+    
+        If directory with specified name doesn't exist.
+    
+    </div>
 
 
     
@@ -2164,7 +2164,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line499">line 499</a>
+        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line500">line 500</a>
     </li></ul></dd>
     
 
@@ -2444,7 +2444,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line434">line 434</a>
+        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line435">line 435</a>
     </li></ul></dd>
     
 
@@ -3218,7 +3218,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line310">line 310</a>
+        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line311">line 311</a>
     </li></ul></dd>
     
 
@@ -3527,7 +3527,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line387">line 387</a>
+        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line388">line 388</a>
     </li></ul></dd>
     
 
@@ -3658,7 +3658,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line300">line 300</a>
+        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line301">line 301</a>
     </li></ul></dd>
     
 
@@ -3789,7 +3789,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line374">line 374</a>
+        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line375">line 375</a>
     </li></ul></dd>
     
 
@@ -4127,7 +4127,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line400">line 400</a>
+        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line401">line 401</a>
     </li></ul></dd>
     
 
@@ -4283,7 +4283,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line469">line 469</a>
+        <a href="directory.js.html">directory.js</a>, <a href="directory.js.html#line470">line 470</a>
     </li></ul></dd>
     
 
@@ -4612,7 +4612,7 @@
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Tue May 16 2017 18:04:57 GMT+0200 (Central Europe Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Wed May 17 2017 10:29:37 GMT+0200 (Central Europe Daylight Time)
 </footer>
 
 <script> prettyPrint(); </script>
