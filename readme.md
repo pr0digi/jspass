@@ -45,6 +45,7 @@ co(function* () {
   //you can also add directories recursively
   var anotherDir = exampleDir.addDirectoryRecursive("subDir/anotherDir/");
 });
+```
 
 #### Working with git
 
@@ -70,3 +71,4 @@ co(function* () {
 
   yield store.commit("Changes");
 });
+```
