@@ -6,9 +6,9 @@ This library is inspired by standard UNIX password manager pass and compatible w
 
 [Documentation](https://doclets.io/pr0digi/jspass/master)
 
-###Getting started
+### Getting started
 
-####Npm
+#### Npm
   npm install --save jspass
 
 
