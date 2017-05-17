@@ -62,7 +62,7 @@ store.importKey(publicKey);
 store.importKey(privateKey);
 
 co(function* () {
-  store.initGit("https://github.com/exampleUser/password-store"); //initialize git, password store currently supports GitHub
+  store.setRepository("https://github.com/exampleUser/password-store", "jspass"); //initialize git, password store currently supports GitHub, also set UserAgent header value, in this case jspass
   store.git.setToken("auth-token") //set OAuth token, you can create one using JSPass with method JSPass.git.createAuthToken, see documentation
 
   yield store.clone();
